@@ -1,6 +1,212 @@
 /* Content script styling for floating UI */
-/* This file will be implemented in Task 5 */
 
 :root {
-  /* CSS tokens will be defined in Task 5 */
+  /* Spacing tokens */
+  --space-xxs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-xxl: 32px;
+
+  /* Font size tokens */
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+
+  /* Border radius tokens */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 999px;
+
+  /* Color tokens - light theme */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f9fa;
+  --color-bg-hover: #e9ecef;
+  --color-bg-active: #dee2e6;
+  --color-border: #dee2e6;
+  --color-text-primary: #212529;
+  --color-text-secondary: #6c757d;
+  --color-text-inverse: #ffffff;
+  --color-shadow: rgba(0, 0, 0, 0.15);
+
+  /* Provider colors */
+  --color-google: #4285f4;
+  --color-chatgpt: #10a37f;
+  --color-claude: #cc785c;
+
+  /* Z-index tokens */
+  --z-dropdown: 9999;
+  --z-modal: 10000;
+
+  /* Animation tokens */
+  --transition-fast: 100ms ease-out;
+  --transition-normal: 200ms ease-out;
+}
+
+/* Namespace to avoid conflicts */
+.select-to-search-container {
+  position: fixed;
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px var(--color-shadow);
+  z-index: var(--z-dropdown);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: var(--font-size-xs);
+  line-height: 1.2;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.select-to-search-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Floating buttons */
+.select-to-search-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 var(--space-sm);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  text-decoration: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.select-to-search-button:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-bg-active);
+}
+
+.select-to-search-button:focus-visible {
+  outline: 2px solid var(--color-google);
+  outline-offset: 2px;
+}
+
+/* Provider-specific buttons */
+.select-to-search-button-google {
+  color: var(--color-google);
+  border-color: var(--color-google);
+}
+
+.select-to-search-button-google:hover {
+  background: var(--color-google);
+  color: var(--color-text-inverse);
+}
+
+.select-to-search-button-chatgpt {
+  color: var(--color-chatgpt);
+  border-color: var(--color-chatgpt);
+}
+
+.select-to-search-button-chatgpt:hover {
+  background: var(--color-chatgpt);
+  color: var(--color-text-inverse);
+}
+
+.select-to-search-button-claude {
+  color: var(--color-claude);
+  border-color: var(--color-claude);
+}
+
+.select-to-search-button-claude:hover {
+  background: var(--color-claude);
+  color: var(--color-text-inverse);
+}
+
+/* Picker button */
+.select-to-search-picker {
+  color: var(--color-text-secondary);
+}
+
+.select-to-search-picker:hover {
+  color: var(--color-text-primary);
+}
+
+/* Picker menu */
+.select-to-search-picker-menu {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px var(--color-shadow);
+  z-index: var(--z-modal);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: var(--font-size-sm);
+  overflow: hidden;
+}
+
+.select-to-search-picker-item {
+  display: flex;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-primary);
+  border: none;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  text-align: left;
+  outline: none;
+}
+
+.select-to-search-picker-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.select-to-search-picker-item:focus-visible {
+  outline: 2px solid var(--color-google);
+  outline-offset: -2px;
+}
+
+/* Separator in picker menu */
+.select-to-search-picker-item:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Accessibility */
+.select-to-search-container[role="toolbar"] {
+  /* Ensure toolbar semantics are preserved */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .select-to-search-container,
+  .select-to-search-button,
+  .select-to-search-picker-item {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border: #000000;
+    --color-text-primary: #000000;
+    --color-bg-primary: #ffffff;
+  }
 }

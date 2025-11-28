@@ -197,6 +197,11 @@ class SelectionHandler {
     this.floatingUI.buttons = buttons;
     this.floatingUI.isVisible = true;
 
+    // Show with animation
+    requestAnimationFrame(() => {
+      container.classList.add('visible');
+    });
+
     // Focus first button for accessibility
     if (buttons.length > 0) {
       (buttons[0] as HTMLElement).focus();

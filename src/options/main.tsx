@@ -3,6 +3,7 @@
 
 import { createRoot } from 'react-dom/client';
 import { OptionsPage } from './OptionsPage';
+import './options.css';
 
 const container = document.getElementById('root');
 if (container) {

@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { copyFileSync, existsSync, mkdirSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { cpSync } from 'fs';
 
 export default defineConfig({
   plugins: [
@@ -12,16 +13,18 @@ export default defineConfig({
         // Copy manifest.json
         copyFileSync('manifest.json', 'dist/manifest.json');
 
-        // Copy CSS files
-        if (!existsSync('dist')) {
-          mkdirSync('dist', { recursive: true });
-        }
+        // Copy content CSS
         copyFileSync('src/content.css', 'dist/content.css');
-        copyFileSync('src/options/options.css', 'dist/options.css');
 
-        // Copy icons
+        // Copy options HTML and update script reference
+        let optionsHtml = readFileSync('public/options.html', 'utf-8');
+        optionsHtml = optionsHtml.replace('src="/options.js"', 'src="./options.js"');
+        writeFileSync('dist/options.html', optionsHtml);
+
+        // Copy icons if they exist
         if (existsSync('public/icons')) {
-          // Icons will need to be manually created or added later
+          mkdirSync('dist/icons', { recursive: true });
+          cpSync('public/icons/', 'dist/icons/', { recursive: true });
         }
       },
     },
@@ -36,7 +39,7 @@ export default defineConfig({
         // Background service worker entry
         background: resolve(__dirname, 'src/background.ts'),
         // Options page entry
-        options: resolve(__dirname, 'public/options.html'),
+        options: resolve(__dirname, 'src/options/main.tsx'),
       },
       output: {
         entryFileNames: '[name].js',

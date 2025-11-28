@@ -131,6 +131,24 @@ The extension should be fast, lightweight, and have a clean, well designed setti
   - Clicking an option builds the deep link URL and opens a new tab.
   - Clicking outside the picker closes it.
 
+### 5.4 Styling and visual iteration
+
+- The initial implementation should use **barebones CSS** focused on readability and layout only:
+  - System font stack, base font size, simple spacing, minimal borders and backgrounds.
+  - No heavy visual theming or complex interaction states in the first pass.
+- All UI surfaces must still be structured for future styling:
+  - Use semantic, role based class names (for example `.settings-panel`, `.settings-section`, `.field`, `.field-label`, `.field-control`) rather than appearance based names like `.blue-box`.
+  - Keep a dedicated stylesheet per surface:
+    - `content.css` for the in page floating button and provider picker.
+    - `options.css` for the React based options page.
+- Define a small set of CSS variables (design tokens) from the beginning, even in the barebones phase, for example in `:root`:
+  - Spacing: `--space-xs`, `--space-s`, `--space-m`, `--space-l`
+  - Typography: `--font-size-base`, `--font-size-small`
+  - Radius: `--radius-s`, `--radius-m`
+  - Colors: `--color-surface`, `--color-border-subtle`, `--color-accent`
+- All layout and basic styling should use these variables so that a later design pass can mostly be implemented by adjusting tokens and component level rules rather than rewriting markup.
+- No CSS framework is required for MVP. If a utility library or design system is introduced later, it should layer on top of the existing semantic structure instead of replacing it.
+
 ---
 
 ## 6. Deep Link Behavior

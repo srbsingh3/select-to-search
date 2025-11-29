@@ -130,7 +130,7 @@ class SelectionHandler {
     }
 
     // Show floating UI
-    this.showFloatingUI(selectedText, range);
+    this.showFloatingUI(selectedText, range, selection);
   }
 
   private isInEditableElement(element: Node): boolean {
@@ -148,7 +148,7 @@ class SelectionHandler {
     );
   }
 
-  private showFloatingUI(selectedText: string, range: Range): void {
+  private showFloatingUI(selectedText: string, range: Range, selection: Selection): void {
     if (!this.settings.enabled) {
       return;
     }
@@ -198,7 +198,7 @@ class SelectionHandler {
     document.body.appendChild(container);
 
     // Position the container using measured size
-    const rect = range.getBoundingClientRect();
+    const rect = this.getSelectionEndRect(selection, range);
     this.positionContainer(container, rect);
 
     // Reveal after positioning
@@ -305,10 +305,13 @@ class SelectionHandler {
     const offset = 6;
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
+    const preferredTop = selectionRect.bottom + offset;
+    const fallbackTop = selectionRect.top - containerHeight - offset;
 
-    const aboveTop = selectionRect.top - containerHeight - offset;
-    const belowTop = selectionRect.bottom + offset;
-    let top = aboveTop > 0 ? aboveTop : belowTop;
+    let top = preferredTop;
+    if (preferredTop + containerHeight + 4 > viewportHeight && fallbackTop >= 4) {
+      top = fallbackTop;
+    }
     top = Math.max(4, Math.min(top, viewportHeight - containerHeight - 4));
 
     let left = selectionRect.left + (selectionRect.width / 2) - (containerWidth / 2);
@@ -316,6 +319,38 @@ class SelectionHandler {
 
     containerStyle.top = `${top}px`;
     containerStyle.left = `${left}px`;
+  }
+
+  private getSelectionEndRect(selection: Selection, range: Range): DOMRect {
+    const focusNode = selection.focusNode;
+    const focusOffset = selection.focusOffset;
+
+    if (focusNode) {
+      try {
+        const focusRange = range.cloneRange();
+        focusRange.setStart(focusNode, focusOffset);
+        focusRange.collapse(true);
+
+        const focusRect = focusRange.getBoundingClientRect();
+        if (focusRect && (focusRect.width || focusRect.height)) {
+          return focusRect;
+        }
+
+        const focusClientRects = focusRange.getClientRects();
+        if (focusClientRects.length) {
+          return focusClientRects[focusClientRects.length - 1];
+        }
+      } catch (_error) {
+        // Ignore errors and fall back to range rects
+      }
+    }
+
+    const clientRects = range.getClientRects();
+    if (clientRects.length) {
+      return clientRects[clientRects.length - 1];
+    }
+
+    return range.getBoundingClientRect();
   }
 
   private openProvider(provider: keyof typeof this.PROVIDER_URLS, text: string): void {

@@ -205,8 +205,8 @@ body {
 }
 
 .switch-track {
-  width: 36px;
-  height: 24px;
+  width: 32px;
+  height: 20px;
   border-radius: 999px;
   background: #cfd3e5;
   display: inline-flex;
@@ -220,8 +220,8 @@ body {
 }
 
 .switch-thumb {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
   background: #ffffff;
   transition: transform var(--transition-fast), background var(--transition-fast);

@@ -140,7 +140,7 @@ body {
 }
 
 .section-label {
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-5);
   font-size: 15px;
   color: var(--text-primary);
   font-weight: 500;

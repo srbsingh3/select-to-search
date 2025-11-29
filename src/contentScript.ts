@@ -27,6 +27,10 @@ class SelectionHandler {
     claude: (text: string) => `https://claude.ai/new?q=${encodeURIComponent(text)}`,
   };
 
+  private hasRuntime(): boolean {
+    return Boolean(typeof chrome !== 'undefined' && chrome?.runtime?.id);
+  }
+
   constructor() {
     this.settings = this.getDefaultSettings();
     this.floatingUI = {
@@ -153,6 +157,7 @@ class SelectionHandler {
     container.className = `${this.NAMESPACE}-container`;
     container.setAttribute('role', 'toolbar');
     container.setAttribute('aria-label', 'Search providers');
+    container.style.visibility = 'hidden';
 
     // Create buttons based on settings
     const buttons: HTMLElement[] = [];
@@ -185,12 +190,15 @@ class SelectionHandler {
       container.appendChild(button);
     });
 
-    // Position the container
+    // Add to DOM for measurement
+    document.body.appendChild(container);
+
+    // Position the container using measured size
     const rect = range.getBoundingClientRect();
     this.positionContainer(container, rect);
 
-    // Add to DOM
-    document.body.appendChild(container);
+    // Reveal after positioning
+    container.style.visibility = '';
 
     // Store references
     this.floatingUI.container = container;
@@ -201,18 +209,25 @@ class SelectionHandler {
     requestAnimationFrame(() => {
       container.classList.add('visible');
     });
-
-    // Focus first button for accessibility
-    if (buttons.length > 0) {
-      (buttons[0] as HTMLElement).focus();
-    }
   }
 
   private createButton(text: string, provider: keyof typeof this.PROVIDER_URLS, selectedText: string): HTMLElement {
     const button = document.createElement('button');
-    button.className = `${this.NAMESPACE}-button ${this.NAMESPACE}-button-${provider}`;
-    button.textContent = text;
+    button.className = `${this.NAMESPACE}-button ${this.NAMESPACE}-button-${provider} ${this.NAMESPACE}-icon-button`;
+    button.type = 'button';
+    button.title = text;
+    button.setAttribute('aria-label', text);
     button.setAttribute('data-provider', provider);
+
+    if ((provider === 'chatgpt' || provider === 'google') && this.hasRuntime()) {
+      const icon = document.createElement('img');
+      icon.className = `${this.NAMESPACE}-icon ${this.NAMESPACE}-icon-${provider}`;
+      icon.alt = text;
+      icon.src = chrome.runtime.getURL(`icons/${provider}.svg`);
+      button.appendChild(icon);
+    } else {
+      button.textContent = 'C';
+    }
 
     button.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -277,26 +292,20 @@ class SelectionHandler {
     containerStyle.position = 'fixed';
     containerStyle.zIndex = '9999';
 
-    // Calculate position above or below selection
+    const measuredRect = container.getBoundingClientRect();
+    const containerHeight = measuredRect.height || 30;
+    const containerWidth = measuredRect.width || 60;
+    const offset = 6;
     const viewportHeight = window.innerHeight;
-    const containerHeight = 40; // Estimated height
-    const offset = 5; // Small offset from selection
+    const viewportWidth = window.innerWidth;
 
-    let top: number;
-    if (selectionRect.top > containerHeight + offset) {
-      // Position above selection
-      top = selectionRect.top - containerHeight - offset;
-    } else {
-      // Position below selection
-      top = selectionRect.bottom + offset;
-    }
+    const aboveTop = selectionRect.top - containerHeight - offset;
+    const belowTop = selectionRect.bottom + offset;
+    let top = aboveTop > 0 ? aboveTop : belowTop;
+    top = Math.max(4, Math.min(top, viewportHeight - containerHeight - 4));
 
-    // Ensure container stays within viewport
-    top = Math.max(0, Math.min(top, viewportHeight - containerHeight));
-
-    // Center horizontally on selection
-    let left = selectionRect.left + (selectionRect.width / 2) - 75; // Approximate center
-    left = Math.max(5, Math.min(left, window.innerWidth - 155)); // Keep within viewport
+    let left = selectionRect.left + (selectionRect.width / 2) - (containerWidth / 2);
+    left = Math.max(4, Math.min(left, viewportWidth - containerWidth - 4));
 
     containerStyle.top = `${top}px`;
     containerStyle.left = `${left}px`;
@@ -306,16 +315,26 @@ class SelectionHandler {
     const url = this.PROVIDER_URLS[provider](text);
 
     // Send message to background script to open tab
-    chrome.runtime.sendMessage({
-      type: 'OPEN_TAB',
-      url: url,
-    }, (_response) => {
-      if (chrome.runtime.lastError) {
-        console.error('Failed to open tab:', chrome.runtime.lastError);
-        // Fallback: open directly
+    if (this.hasRuntime()) {
+      try {
+        chrome.runtime.sendMessage({
+          type: 'OPEN_TAB',
+          url: url,
+        }, (_response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Failed to open tab:', chrome.runtime.lastError);
+            // Fallback: open directly
+            window.open(url, '_blank');
+          }
+        });
+      } catch (error) {
+        console.error('Failed to send message:', error);
         window.open(url, '_blank');
       }
-    });
+    } else {
+      // If the extension context is gone (e.g., after reload), fall back gracefully
+      window.open(url, '_blank');
+    }
 
     // Hide UI after action
     this.hideFloatingUI();

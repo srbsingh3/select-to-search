@@ -11,11 +11,13 @@
   --text-tertiary: #b0b5c0;
   --accent: #7180ff;
   --accent-soft: rgba(113, 128, 255, 0.12);
+  --provider-size: 20px;
 
   --radius-sm: 6px;
   --radius-md: 6px;
   --radius-lg: 6px;
 
+  --space-1: 4px;
   --space-2: 6px;
   --space-3: 10px;
   --space-4: 14px;
@@ -184,15 +186,19 @@ body {
   min-width: 0;
 }
 
+
 .setting-label {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-height: var(--provider-size);
 }
 
 .provider-icon {
-  width: 20px;
-  height: 20px;
+  flex: 0 0 var(--provider-size);
+  width: var(--provider-size);
+  height: var(--provider-size);
+  display: block;
 }
 
 .setting-title {
@@ -200,10 +206,13 @@ body {
   font-size: 15px;
   font-weight: 500;
   color: var(--text-primary);
+  line-height: var(--provider-size);
+  display: inline-flex;
+  align-items: center;
 }
 
 .setting-description {
-  margin: 6px 0 0;
+  margin: var(--space-1) 0 0;
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.45;

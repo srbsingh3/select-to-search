@@ -11,7 +11,6 @@
   --text-tertiary: #b0b5c0;
   --accent: #7180ff;
   --accent-soft: rgba(113, 128, 255, 0.12);
-  --shadow-soft: 0 12px 28px rgba(0, 0, 0, 0.06);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -40,7 +39,6 @@
   --text-secondary: #6b6f76;
   --text-tertiary: #6b6f76;
   --accent-soft: rgba(113, 128, 255, 0.2);
-  --shadow-soft: 0 18px 38px rgba(0, 0, 0, 0.55);
 }
 
 *,
@@ -119,7 +117,6 @@ body {
   font-size: 13px;
   min-width: 92px;
   text-align: center;
-  box-shadow: var(--shadow-soft);
 }
 
 .status-pill.saving {
@@ -129,7 +126,6 @@ body {
 .status-pill.saved {
   color: var(--accent);
   border-color: var(--accent-soft);
-  box-shadow: 0 10px 24px rgba(113, 128, 255, 0.2);
   background: var(--accent-soft);
 }
 
@@ -156,7 +152,6 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
   padding: var(--space-4) var(--space-5);
 }
 
@@ -219,7 +214,6 @@ body {
   align-items: center;
   padding: 3px;
   transition: all var(--transition-fast);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .switch-thumb {
@@ -227,7 +221,6 @@ body {
   height: 22px;
   border-radius: 999px;
   background: var(--surface-raised);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
   transition: transform var(--transition-fast), background var(--transition-fast);
   transform: translateX(0);
 }
@@ -240,11 +233,6 @@ body {
 .switch input:checked + .switch-track .switch-thumb {
   transform: translateX(20px);
   background: #ffffff;
-  box-shadow: 0 8px 18px rgba(113, 128, 255, 0.4);
-}
-
-.switch:focus-within .switch-track {
-  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .segmented-control {
@@ -254,7 +242,6 @@ body {
   border-radius: var(--radius-sm);
   padding: 2px;
   gap: 4px;
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.02);
 }
 
 .segmented-control button {
@@ -265,7 +252,7 @@ body {
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .segmented-control button:hover {
@@ -280,7 +267,6 @@ body {
 .segmented-control button.active {
   background: var(--accent);
   color: #ffffff;
-  box-shadow: 0 10px 24px rgba(113, 128, 255, 0.28);
 }
 
 .segmented-control button:focus-visible {
@@ -306,7 +292,6 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
   color: var(--text-secondary);
 }
 

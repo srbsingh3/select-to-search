@@ -60,7 +60,7 @@ Example:
 
 - [ ] 6.0 Package, test, and QA the extension build
   - [x] 6.1 Build extension bundles via Vite; verify output structure (`dist/` with manifest, scripts, options assets).
-  - [ ] 6.2 Load unpacked extension in Chrome; smoke test selection flow: buttons appear in order (ChatGPT, Google), Claude appears only if enabled.
+  - [x] 6.2 Load unpacked extension in Chrome; smoke test selection flow: buttons appear in order (ChatGPT, Google), Claude appears only if enabled.
   - [ ] 6.3 Verify picker mode, enable/disable toggle, and settings persistence across sessions (`chrome.storage.sync`).
   - [ ] 6.4 Verify performance target (~100ms) and disappearance triggers (deselect, scroll, outside click, Escape).
   - [ ] 6.5 Log any errors and ensure graceful degradation if storage/messages fail.

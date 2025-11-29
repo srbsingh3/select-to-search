@@ -1,5 +1,5 @@
 // React component for options page
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface Settings {
   enabled: boolean;
@@ -10,6 +10,14 @@ interface Settings {
   };
   affordanceMode: 'quick-actions' | 'picker';
 }
+
+type Theme = 'light' | 'dark';
+const themeStorageKey = 'sts-options-theme';
+const providerDescriptions: Record<keyof Settings['providers'], string> = {
+  chatgpt: 'Show the ChatGPT action when highlighting text',
+  google: 'Offer a one-click Google search for the selection',
+  claude: 'Send highlighted text to Claude for quick answers',
+};
 
 export const OptionsPage: React.FC = () => {
   const [settings, setSettings] = useState<Settings>({
@@ -22,12 +30,42 @@ export const OptionsPage: React.FC = () => {
     affordanceMode: 'quick-actions',
   });
 
+  const [theme, setTheme] = useState<Theme>('light');
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
     loadSettings();
+    bootstrapTheme();
   }, []);
+
+  useEffect(() => {
+    applyTheme(theme);
+    try {
+      localStorage.setItem(themeStorageKey, theme);
+    } catch (error) {
+      console.warn('Could not persist theme preference', error);
+    }
+  }, [theme]);
+
+  const bootstrapTheme = () => {
+    try {
+      const storedTheme = localStorage.getItem(themeStorageKey);
+      if (storedTheme === 'light' || storedTheme === 'dark') {
+        setTheme(storedTheme);
+        applyTheme(storedTheme);
+        return;
+      }
+    } catch (error) {
+      console.warn('Could not read theme preference', error);
+    }
+
+    applyTheme('light');
+  };
+
+  const applyTheme = (value: Theme) => {
+    document.documentElement.dataset.theme = value;
+  };
 
   const loadSettings = async () => {
     try {
@@ -65,6 +103,10 @@ export const OptionsPage: React.FC = () => {
     }
   };
 
+  const handleThemeChange = (value: Theme) => {
+    setTheme(value);
+  };
+
   const handleEnabledChange = (enabled: boolean) => {
     saveSettings({ enabled });
   };
@@ -82,162 +124,177 @@ export const OptionsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="options-container">
-        <div className="loading">Loading settings...</div>
+      <div className="options-shell">
+        <div className="loading-card">Loading your preferences...</div>
       </div>
     );
   }
 
   return (
-    <div className="options-container">
-      <header className="options-header">
-        <h1>Select to Search</h1>
-        <p className="subtitle">Configure your search extension preferences</p>
+    <div className="options-shell">
+      <header className="page-header">
+        <div className="page-heading">
+          <p className="page-label">Preferences</p>
+          <h1>Select to Search</h1>
+          <p className="page-subtitle">
+            Fine-tune how the floating search affordance behaves and which providers appear.
+          </p>
+        </div>
+        <div className="page-meta">
+          <div className={`status-pill ${saveStatus}`}>
+            {saveStatus === 'saving' && 'Saving'}
+            {saveStatus === 'saved' && 'Saved'}
+            {saveStatus === 'error' && 'Save failed'}
+            {saveStatus === 'idle' && 'Up to date'}
+          </div>
+        </div>
       </header>
 
-      <main className="options-main">
-        <section className="settings-section">
-          <h2>Extension Status</h2>
-          <div className="setting-item">
-            <label className="toggle-label">
-              <input
-                type="checkbox"
-                checked={settings.enabled}
-                onChange={(e) => handleEnabledChange(e.target.checked)}
-                className="toggle-input"
-              />
-              <span className="toggle-slider"></span>
-              <span className="toggle-text">
-                Enable Select to Search
-              </span>
-            </label>
-            <p className="setting-description">
-              When enabled, selection affordances will appear on web pages
-            </p>
+      <main className="page-content">
+        <section className="section">
+          <p className="section-label">General</p>
+          <div className="card">
+            <div className="setting-row">
+              <div className="setting-copy">
+                <div className="setting-title">Enable Select to Search</div>
+                <p className="setting-description">
+                  Turn the extension on to show quick actions whenever you highlight text.
+                </p>
+              </div>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={settings.enabled}
+                  onChange={(e) => handleEnabledChange(e.target.checked)}
+                  aria-label="Toggle Select to Search"
+                />
+                <span className="switch-track">
+                  <span className="switch-thumb" />
+                </span>
+              </label>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-copy">
+                <div className="setting-title">Affordance style</div>
+                <p className="setting-description">
+                  Choose how provider actions appear when you select text.
+                </p>
+              </div>
+              <div className="segmented-control" role="group" aria-label="Select affordance style">
+                <button
+                  type="button"
+                  className={settings.affordanceMode === 'quick-actions' ? 'active' : ''}
+                  onClick={() => handleModeChange('quick-actions')}
+                  aria-pressed={settings.affordanceMode === 'quick-actions'}
+                >
+                  Quick actions
+                </button>
+                <button
+                  type="button"
+                  className={settings.affordanceMode === 'picker' ? 'active' : ''}
+                  onClick={() => handleModeChange('picker')}
+                  aria-pressed={settings.affordanceMode === 'picker'}
+                >
+                  Provider picker
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
         {settings.enabled && (
-          <>
-            <section className="settings-section">
-              <h2>Affordance Mode</h2>
-              <div className="setting-item">
-                <div className="radio-group">
-                  <label className="radio-label">
-                    <input
-                      type="radio"
-                      name="affordanceMode"
-                      value="quick-actions"
-                      checked={settings.affordanceMode === 'quick-actions'}
-                      onChange={() => handleModeChange('quick-actions')}
-                      className="radio-input"
-                    />
-                    <span className="radio-text">
-                      Quick Actions
-                      <small>Show provider buttons directly (recommended)</small>
-                    </span>
-                  </label>
-                  <label className="radio-label">
-                    <input
-                      type="radio"
-                      name="affordanceMode"
-                      value="picker"
-                      checked={settings.affordanceMode === 'picker'}
-                      onChange={() => handleModeChange('picker')}
-                      className="radio-input"
-                    />
-                    <span className="radio-text">
-                      Provider Picker
-                      <small>Show a single button that opens a menu</small>
-                    </span>
-                  </label>
-                </div>
-              </div>
-            </section>
-
-            <section className="settings-section">
-              <h2>Enabled Providers</h2>
-              <p className="section-description">
-                Choose which providers to show in the floating UI
-              </p>
-              <div className="provider-list">
-                <div className="setting-item">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={settings.providers.chatgpt}
-                      onChange={(e) => handleProviderChange('chatgpt', e.target.checked)}
-                      className="checkbox-input"
-                    />
-                    <span className="checkbox-text">
-                      Ask ChatGPT
-                    </span>
-                  </label>
-                </div>
-
-                <div className="setting-item">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={settings.providers.google}
-                      onChange={(e) => handleProviderChange('google', e.target.checked)}
-                      className="checkbox-input"
-                    />
-                    <span className="checkbox-text">
-                      Google Search
-                    </span>
-                  </label>
-                </div>
-
-                <div className="setting-item">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={settings.providers.claude}
-                      onChange={(e) => handleProviderChange('claude', e.target.checked)}
-                      className="checkbox-input"
-                    />
-                    <span className="checkbox-text">
-                      Ask Claude
-                    </span>
-                  </label>
-                </div>
-              </div>
+          <section className="section">
+            <p className="section-label">Providers</p>
+            <div className="card">
+              {(Object.keys(settings.providers) as Array<keyof Settings['providers']>).map(
+                (provider) => (
+                  <div className="setting-row" key={provider}>
+                    <div className="setting-copy">
+                      <div className="setting-title">
+                        {provider === 'chatgpt' && 'Ask ChatGPT'}
+                        {provider === 'google' && 'Google Search'}
+                        {provider === 'claude' && 'Ask Claude'}
+                      </div>
+                      <p className="setting-description">
+                        {providerDescriptions[provider]}
+                      </p>
+                    </div>
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={settings.providers[provider]}
+                        onChange={(e) => handleProviderChange(provider, e.target.checked)}
+                        aria-label={`Toggle ${provider} provider`}
+                      />
+                      <span className="switch-track">
+                        <span className="switch-thumb" />
+                      </span>
+                    </label>
+                  </div>
+                ),
+              )}
 
               {!hasAnyProviderEnabled && (
-                <p className="warning">
-                  Warning: At least one provider must be enabled for the extension to work
-                </p>
+                <div className="warning">
+                  At least one provider needs to stay on for the floating actions to work.
+                </div>
               )}
-            </section>
-          </>
+            </div>
+          </section>
         )}
 
-        <section className="settings-section">
-          <h2>About</h2>
-          <div className="about-info">
-            <p>
-              <strong>Version:</strong> {chrome.runtime.getManifest().version}
-            </p>
-            <p>
-              Select to Search allows you to instantly search selected text on any webpage
-              using your preferred AI and search providers.
-            </p>
-            <p>
-              To use: Select text on any webpage and click one of the floating buttons
-              to open the provider in a new tab.
-            </p>
+        <section className="section">
+          <p className="section-label">Interface</p>
+          <div className="card">
+            <div className="setting-row">
+              <div className="setting-copy">
+                <div className="setting-title">Interface theme</div>
+                <p className="setting-description">
+                  Keep a bright workspace by default or swap to the dark palette.
+                </p>
+              </div>
+              <div className="segmented-control" role="group" aria-label="Select interface theme">
+                <button
+                  type="button"
+                  className={theme === 'light' ? 'active' : ''}
+                  onClick={() => handleThemeChange('light')}
+                  aria-pressed={theme === 'light'}
+                >
+                  Light
+                </button>
+                <button
+                  type="button"
+                  className={theme === 'dark' ? 'active' : ''}
+                  onClick={() => handleThemeChange('dark')}
+                  aria-pressed={theme === 'dark'}
+                >
+                  Dark
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="section">
+          <p className="section-label">About</p>
+          <div className="card">
+            <div className="setting-row no-border">
+              <div className="setting-copy">
+                <div className="setting-title">Version {chrome.runtime.getManifest().version}</div>
+                <p className="setting-description">
+                  Highlight any text and use the floating buttons to send it to your chosen
+                  provider. Each pick opens in a new tab so you stay in flow.
+                </p>
+                <p className="setting-description">
+                  Tip: keep at least one provider enabled and use the provider picker mode when you
+                  want a smaller UI footprint.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
       </main>
-
-      <footer className="options-footer">
-        <div className={`save-status ${saveStatus}`}>
-          {saveStatus === 'saving' && 'Saving...'}
-          {saveStatus === 'saved' && 'Settings saved!'}
-          {saveStatus === 'error' && 'Failed to save settings'}
-        </div>
-      </footer>
     </div>
   );
 };

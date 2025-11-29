@@ -305,20 +305,19 @@ class SelectionHandler {
     const offset = 6;
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
-    const preferredTop = selectionRect.bottom + offset;
-    const fallbackTop = selectionRect.top - containerHeight - offset;
+    const candidates = this.getCandidatePositions(
+      selectionRect,
+      containerWidth,
+      containerHeight,
+      offset,
+      viewportWidth,
+      viewportHeight,
+    );
 
-    let top = preferredTop;
-    if (preferredTop + containerHeight + 4 > viewportHeight && fallbackTop >= 4) {
-      top = fallbackTop;
-    }
-    top = Math.max(4, Math.min(top, viewportHeight - containerHeight - 4));
+    const bestPosition = this.getBestPosition(container, candidates, containerWidth, containerHeight);
 
-    let left = selectionRect.left + (selectionRect.width / 2) - (containerWidth / 2);
-    left = Math.max(4, Math.min(left, viewportWidth - containerWidth - 4));
-
-    containerStyle.top = `${top}px`;
-    containerStyle.left = `${left}px`;
+    containerStyle.top = `${bestPosition.top}px`;
+    containerStyle.left = `${bestPosition.left}px`;
   }
 
   private getSelectionEndRect(selection: Selection, range: Range): DOMRect {
@@ -427,6 +426,173 @@ class SelectionHandler {
     document.removeEventListener('scroll', this.handleScroll.bind(this), true);
     document.removeEventListener('selectionchange', this.handleSelectionChange.bind(this));
     window.removeEventListener('beforeunload', this.cleanup.bind(this));
+  }
+
+  private getCandidatePositions(
+    selectionRect: DOMRect,
+    containerWidth: number,
+    containerHeight: number,
+    offset: number,
+    viewportWidth: number,
+    viewportHeight: number,
+  ): Array<{top: number; left: number}> {
+    const margin = 4;
+    const centerLeft = this.clamp(
+      selectionRect.left + (selectionRect.width / 2) - (containerWidth / 2),
+      margin,
+      viewportWidth - containerWidth - margin,
+    );
+
+    const belowTop = this.clamp(
+      selectionRect.bottom + offset,
+      margin,
+      viewportHeight - containerHeight - margin,
+    );
+
+    const aboveTop = this.clamp(
+      selectionRect.top - containerHeight - offset,
+      margin,
+      viewportHeight - containerHeight - margin,
+    );
+
+    const rightLeft = this.clamp(
+      selectionRect.right + offset,
+      margin,
+      viewportWidth - containerWidth - margin,
+    );
+
+    const leftLeft = this.clamp(
+      selectionRect.left - containerWidth - offset,
+      margin,
+      viewportWidth - containerWidth - margin,
+    );
+
+    const middleTop = this.clamp(
+      selectionRect.top + (selectionRect.height / 2) - (containerHeight / 2),
+      margin,
+      viewportHeight - containerHeight - margin,
+    );
+
+    return [
+      { top: belowTop, left: centerLeft },
+      { top: aboveTop, left: centerLeft },
+      { top: middleTop, left: rightLeft },
+      { top: middleTop, left: leftLeft },
+    ];
+  }
+
+  private getBestPosition(
+    container: HTMLElement,
+    candidates: Array<{top: number; left: number}>,
+    containerWidth: number,
+    containerHeight: number,
+  ): {top: number; left: number} {
+    let bestPosition = candidates[0];
+    let bestOverlap = Number.POSITIVE_INFINITY;
+
+    for (const candidate of candidates) {
+      const candidateRect = new DOMRect(candidate.left, candidate.top, containerWidth, containerHeight);
+      const overlapScore = this.getOverlapScore(candidateRect, container);
+
+      if (overlapScore < bestOverlap) {
+        bestPosition = candidate;
+        bestOverlap = overlapScore;
+      }
+
+      if (overlapScore === 0) {
+        break;
+      }
+    }
+
+    return bestPosition;
+  }
+
+  private getOverlapScore(candidateRect: DOMRect, container: HTMLElement): number {
+    const overlaps = this.getOverlappingRects(candidateRect, container);
+    if (!overlaps.length) {
+      return 0;
+    }
+
+    return overlaps.reduce((total, rect) => total + this.getIntersectionArea(candidateRect, rect), 0);
+  }
+
+  private getOverlappingRects(candidateRect: DOMRect, container: HTMLElement): DOMRect[] {
+    const samplePoints = this.getSamplePoints(candidateRect);
+    const elements = new Set<Element>();
+
+    samplePoints.forEach(point => {
+      document.elementsFromPoint(point.x, point.y).forEach(el => elements.add(el));
+    });
+
+    const overlaps: DOMRect[] = [];
+
+    elements.forEach(el => {
+      if (!el || el === document.body || el === document.documentElement) {
+        return;
+      }
+
+      if (container.contains(el) || el.contains(container)) {
+        return;
+      }
+
+      const style = window.getComputedStyle(el);
+      if (style.visibility === 'hidden' || style.display === 'none' || style.pointerEvents === 'none') {
+        return;
+      }
+
+      const position = style.position;
+      if (position !== 'fixed' && position !== 'absolute' && position !== 'sticky') {
+        return;
+      }
+
+      const rect = el.getBoundingClientRect();
+      if (!rect || rect.width === 0 || rect.height === 0) {
+        return;
+      }
+
+      const intersects =
+        rect.left < candidateRect.right &&
+        rect.right > candidateRect.left &&
+        rect.top < candidateRect.bottom &&
+        rect.bottom > candidateRect.top;
+
+      if (!intersects) {
+        return;
+      }
+
+      overlaps.push(rect);
+    });
+
+    return overlaps;
+  }
+
+  private getSamplePoints(rect: DOMRect): Array<{x: number; y: number}> {
+    const padding = 1;
+    const points = [
+      { x: rect.left + padding, y: rect.top + padding },
+      { x: rect.right - padding, y: rect.top + padding },
+      { x: rect.left + padding, y: rect.bottom - padding },
+      { x: rect.right - padding, y: rect.bottom - padding },
+      { x: rect.left + (rect.width / 2), y: rect.top + (rect.height / 2) },
+    ];
+
+    return points.map(point => ({
+      x: this.clamp(point.x, 0, window.innerWidth - 1),
+      y: this.clamp(point.y, 0, window.innerHeight - 1),
+    }));
+  }
+
+  private getIntersectionArea(a: DOMRect, b: DOMRect): number {
+    const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+    const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+    return width * height;
+  }
+
+  private clamp(value: number, min: number, max: number): number {
+    if (Number.isNaN(value)) {
+      return min;
+    }
+    return Math.max(min, Math.min(value, max));
   }
 }
 

@@ -23,7 +23,11 @@ class SelectionHandler {
   private readonly NAMESPACE = 'select-to-search';
   private readonly PROVIDER_URLS = {
     google: (text: string) => `https://www.google.com/search?q=${encodeURIComponent(text)}`,
-    chatgpt: (text: string) => `https://chatgpt.com/?q=${encodeURIComponent(text)}`,
+    // Include both q and input params so ChatGPT prefills reliably across variants
+    chatgpt: (text: string) => {
+      const encoded = encodeURIComponent(text);
+      return `https://chatgpt.com/?q=${encoded}&input=${encoded}`;
+    },
     claude: (text: string) => `https://claude.ai/new?q=${encodeURIComponent(text)}`,
   };
 

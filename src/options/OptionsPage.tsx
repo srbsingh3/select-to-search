@@ -13,11 +13,6 @@ interface Settings {
 
 type Theme = 'light' | 'dark';
 const themeStorageKey = 'sts-options-theme';
-const providerDescriptions: Record<keyof Settings['providers'], string> = {
-  chatgpt: 'Show the ChatGPT action when highlighting text',
-  google: 'Offer a one-click Google search for the selection',
-  claude: 'Send highlighted text to Claude for quick answers',
-};
 
 export const OptionsPage: React.FC = () => {
   const [settings, setSettings] = useState<Settings>({
@@ -32,7 +27,6 @@ export const OptionsPage: React.FC = () => {
 
   const [theme, setTheme] = useState<Theme>('light');
   const [isLoading, setIsLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
     loadSettings();
@@ -88,18 +82,12 @@ export const OptionsPage: React.FC = () => {
   };
 
   const saveSettings = async (newSettings: Partial<Settings>) => {
-    setSaveStatus('saving');
-
     try {
       const updatedSettings = { ...settings, ...newSettings };
       await chrome.storage.sync.set(updatedSettings);
       setSettings(updatedSettings);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Failed to save settings:', error);
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
     }
   };
 
@@ -141,12 +129,18 @@ export const OptionsPage: React.FC = () => {
           </p>
         </div>
         <div className="page-meta">
-          <div className={`status-pill ${saveStatus}`}>
-            {saveStatus === 'saving' && 'Saving'}
-            {saveStatus === 'saved' && 'Saved'}
-            {saveStatus === 'error' && 'Save failed'}
-            {saveStatus === 'idle' && 'Up to date'}
-          </div>
+          <a
+            href="https://www.buymeacoffee.com/saurabhs"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Buy me a coffee"
+          >
+            <img
+              src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+              alt="Buy Me A Coffee"
+              style={{ height: '50px', width: '182px' }}
+            />
+          </a>
         </div>
       </header>
 
@@ -216,9 +210,6 @@ export const OptionsPage: React.FC = () => {
                         {provider === 'google' && 'Google Search'}
                         {provider === 'claude' && 'Ask Claude'}
                       </div>
-                      <p className="setting-description">
-                        {providerDescriptions[provider]}
-                      </p>
                     </div>
                     <label className="switch">
                       <input

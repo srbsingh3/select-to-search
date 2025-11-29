@@ -186,6 +186,17 @@ body {
   min-width: 0;
 }
 
+.setting-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.provider-icon {
+  width: 20px;
+  height: 20px;
+}
+
 .setting-title {
   margin: 0;
   font-size: 15px;

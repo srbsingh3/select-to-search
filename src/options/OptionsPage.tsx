@@ -14,6 +14,11 @@ interface Settings {
 type Theme = 'light' | 'dark';
 const themeStorageKey = 'sts-options-theme';
 const providerOrder: Array<keyof Settings['providers']> = ['chatgpt', 'google', 'claude'];
+const providerIcons: Record<keyof Settings['providers'], string> = {
+  chatgpt: '/icons/chatgpt.svg',
+  google: '/icons/google.svg',
+  claude: '/icons/claude.svg',
+};
 
 export const OptionsPage: React.FC = () => {
   const [settings, setSettings] = useState<Settings>({
@@ -204,10 +209,17 @@ export const OptionsPage: React.FC = () => {
                   settings.providers[provider] !== undefined && (
                     <div className="setting-row" key={provider}>
                       <div className="setting-copy">
-                        <div className="setting-title">
-                          {provider === 'chatgpt' && 'ChatGPT'}
-                          {provider === 'google' && 'Google Search'}
-                          {provider === 'claude' && 'Claude'}
+                        <div className="setting-label">
+                          <img
+                            src={providerIcons[provider]}
+                            alt={`${provider} logo`}
+                            className="provider-icon"
+                          />
+                          <span className="setting-title">
+                            {provider === 'chatgpt' && 'ChatGPT'}
+                            {provider === 'google' && 'Google Search'}
+                            {provider === 'claude' && 'Claude'}
+                          </span>
                         </div>
                       </div>
                       <label className="switch">

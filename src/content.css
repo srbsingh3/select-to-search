@@ -71,12 +71,6 @@
   font-size: var(--font-size-xs);
   line-height: 1.2;
   box-sizing: border-box;
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.select-to-search-container.visible {
   opacity: 1;
   transform: translateY(0);
 }

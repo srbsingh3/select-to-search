@@ -219,14 +219,17 @@ class SelectionHandler {
     button.setAttribute('aria-label', text);
     button.setAttribute('data-provider', provider);
 
-    if ((provider === 'chatgpt' || provider === 'google') && this.hasRuntime()) {
+    const hasIcon = provider === 'chatgpt' || provider === 'google' || provider === 'claude';
+
+    if (hasIcon && this.hasRuntime()) {
       const icon = document.createElement('img');
       icon.className = `${this.NAMESPACE}-icon ${this.NAMESPACE}-icon-${provider}`;
       icon.alt = text;
       icon.src = chrome.runtime.getURL(`icons/${provider}.svg`);
       button.appendChild(icon);
     } else {
-      button.textContent = 'C';
+      const fallback = provider === 'google' ? 'G' : 'C';
+      button.textContent = fallback;
     }
 
     button.addEventListener('click', (e) => {

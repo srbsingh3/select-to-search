@@ -9,6 +9,7 @@
   --space-lg: 16px;
   --space-xl: 24px;
   --space-xxl: 32px;
+  --space-icon-gap: 4px;
 
   /* Font size tokens */
   --font-size-xs: 11px;
@@ -56,10 +57,9 @@
   position: fixed;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-icon-gap);
   padding: 4px;
   height: 30px;
-  min-width: 60px;
   background: #ffffff;
   border: none;
   border-radius: 4px;
@@ -105,7 +105,7 @@
 .select-to-search-icon-button {
   width: 24px;
   height: 22px;
-  border-radius: 6px;
+  border-radius: 4px;
   transition: background-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
@@ -138,6 +138,11 @@
 .select-to-search-icon-google {
   width: 18px;
   height: 18px;
+}
+
+.select-to-search-icon-claude {
+  width: 16px;
+  height: 16px;
 }
 
 /* Picker button */

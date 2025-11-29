@@ -152,9 +152,9 @@ export const OptionsPage: React.FC = () => {
           <div className="card">
             <div className="setting-row">
               <div className="setting-copy">
-                <div className="setting-title">Enable Select to Search</div>
+                <div className="setting-title">Enable Extension</div>
                 <p className="setting-description">
-                  Turn the extension on to show quick actions whenever you highlight text.
+                  Show quick actions whenever you highlight text.
                 </p>
               </div>
               <label className="switch">

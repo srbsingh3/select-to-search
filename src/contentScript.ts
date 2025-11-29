@@ -93,7 +93,11 @@ class SelectionHandler {
     }, 10);
   }
 
-  private handleKeyUp(_event: KeyboardEvent): void {
+  private handleKeyUp(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      return;
+    }
+
     // Check selection after key release (for keyboard selection)
     this.selectionTimeout = window.setTimeout(() => {
       this.checkSelection();

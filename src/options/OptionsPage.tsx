@@ -124,9 +124,6 @@ export const OptionsPage: React.FC = () => {
         <div className="page-heading">
           <p className="page-label">Preferences</p>
           <h1>Select to Search</h1>
-          <p className="page-subtitle">
-            Fine-tune how the floating search affordance behaves and which providers appear.
-          </p>
         </div>
         <div className="page-meta">
           <a

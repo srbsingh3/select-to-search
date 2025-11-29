@@ -66,12 +66,12 @@ body {
 }
 
 .page-content {
-  max-width: 960px;
+  max-width: 768px;
   margin: 0 auto;
 }
 
 .page-header {
-  max-width: 960px;
+  max-width: 768px;
   margin: 0 auto var(--space-7);
   display: flex;
   justify-content: space-between;

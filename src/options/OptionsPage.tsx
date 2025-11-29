@@ -13,6 +13,7 @@ interface Settings {
 
 type Theme = 'light' | 'dark';
 const themeStorageKey = 'sts-options-theme';
+const providerOrder: Array<keyof Settings['providers']> = ['chatgpt', 'google', 'claude'];
 
 export const OptionsPage: React.FC = () => {
   const [settings, setSettings] = useState<Settings>({
@@ -198,29 +199,30 @@ export const OptionsPage: React.FC = () => {
           <section className="section">
             <p className="section-label">Providers</p>
             <div className="card">
-              {(Object.keys(settings.providers) as Array<keyof Settings['providers']>).map(
-                (provider) => (
-                  <div className="setting-row" key={provider}>
-                    <div className="setting-copy">
-                      <div className="setting-title">
-                        {provider === 'chatgpt' && 'Ask ChatGPT'}
-                        {provider === 'google' && 'Google Search'}
-                        {provider === 'claude' && 'Ask Claude'}
+              {providerOrder.map(
+                (provider) =>
+                  settings.providers[provider] !== undefined && (
+                    <div className="setting-row" key={provider}>
+                      <div className="setting-copy">
+                        <div className="setting-title">
+                          {provider === 'chatgpt' && 'ChatGPT'}
+                          {provider === 'google' && 'Google Search'}
+                          {provider === 'claude' && 'Claude'}
+                        </div>
                       </div>
+                      <label className="switch">
+                        <input
+                          type="checkbox"
+                          checked={settings.providers[provider]}
+                          onChange={(e) => handleProviderChange(provider, e.target.checked)}
+                          aria-label={`Toggle ${provider} provider`}
+                        />
+                        <span className="switch-track">
+                          <span className="switch-thumb" />
+                        </span>
+                      </label>
                     </div>
-                    <label className="switch">
-                      <input
-                        type="checkbox"
-                        checked={settings.providers[provider]}
-                        onChange={(e) => handleProviderChange(provider, e.target.checked)}
-                        aria-label={`Toggle ${provider} provider`}
-                      />
-                      <span className="switch-track">
-                        <span className="switch-thumb" />
-                      </span>
-                    </label>
-                  </div>
-                ),
+                  ),
               )}
 
               {!hasAnyProviderEnabled && (

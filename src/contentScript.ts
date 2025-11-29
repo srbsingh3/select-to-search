@@ -173,13 +173,13 @@ class SelectionHandler {
     if (this.settings.affordanceMode === 'quick-actions') {
       // Show only enabled providers as quick actions
       if (this.settings.providers.chatgpt) {
-        buttons.push(this.createButton('Ask ChatGPT', 'chatgpt', selectedText));
+        buttons.push(this.createButton('ChatGPT', 'chatgpt', selectedText));
       }
       if (this.settings.providers.google) {
         buttons.push(this.createButton('Google Search', 'google', selectedText));
       }
       if (this.settings.providers.claude) {
-        buttons.push(this.createButton('Ask Claude', 'claude', selectedText));
+        buttons.push(this.createButton('Claude', 'claude', selectedText));
       }
     } else {
       // Show picker mode
@@ -255,9 +255,9 @@ class SelectionHandler {
     picker.setAttribute('role', 'menu');
 
     const providers: Array<{key: 'chatgpt' | 'google' | 'claude', name: string}> = [
-      { key: 'chatgpt', name: 'Ask ChatGPT' },
+      { key: 'chatgpt', name: 'ChatGPT' },
       { key: 'google', name: 'Google Search' },
-      { key: 'claude', name: 'Ask Claude' },
+      { key: 'claude', name: 'Claude' },
     ];
 
     providers.forEach((provider) => {

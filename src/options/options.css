@@ -140,11 +140,9 @@ body {
 }
 
 .section-label {
-  margin: 0 0 var(--space-3);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  margin: 0 0 var(--space-4);
+  font-size: 15px;
+  color: var(--text-primary);
   font-weight: 500;
 }
 

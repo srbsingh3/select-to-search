@@ -128,7 +128,6 @@ export const OptionsPage: React.FC = () => {
     <div className="options-shell">
       <header className="page-header">
         <div className="page-heading">
-          <p className="page-label">Preferences</p>
           <h1>Select to Search</h1>
         </div>
         <div className="page-meta">
@@ -287,10 +286,6 @@ export const OptionsPage: React.FC = () => {
                 <p className="setting-description">
                   Highlight any text and use the floating buttons to send it to your chosen
                   provider. Each pick opens in a new tab so you stay in flow.
-                </p>
-                <p className="setting-description">
-                  Tip: keep at least one provider enabled and use the provider picker mode when you
-                  want a smaller UI footprint.
                 </p>
               </div>
             </div>

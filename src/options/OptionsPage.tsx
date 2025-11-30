@@ -8,7 +8,7 @@ interface Settings {
     google: boolean;
     claude: boolean;
   };
-  affordanceMode: 'quick-actions' | 'picker';
+  affordanceMode: 'quick-actions';
   theme: Theme;
 }
 
@@ -117,10 +117,7 @@ export const OptionsPage: React.FC = () => {
     saveSettings({ providers: newProviders });
   };
 
-  const handleModeChange = (affordanceMode: 'quick-actions' | 'picker') => {
-    saveSettings({ affordanceMode });
-  };
-
+  
   const hasAnyProviderEnabled = Object.values(settings.providers).some(Boolean);
 
   if (isLoading) {
@@ -179,27 +176,27 @@ export const OptionsPage: React.FC = () => {
 
             <div className="setting-row">
               <div className="setting-copy">
-                <div className="setting-title">Affordance style</div>
+                <div className="setting-title">Interface theme</div>
                 <p className="setting-description">
-                  Choose how the search button appears when you select text
+                  Keep a bright workspace by default or swap to the dark palette.
                 </p>
               </div>
-              <div className="segmented-control" role="group" aria-label="Select affordance style">
+              <div className="segmented-control" role="group" aria-label="Select interface theme">
                 <button
                   type="button"
-                  className={settings.affordanceMode === 'quick-actions' ? 'active' : ''}
-                  onClick={() => handleModeChange('quick-actions')}
-                  aria-pressed={settings.affordanceMode === 'quick-actions'}
+                  className={theme === 'light' ? 'active' : ''}
+                  onClick={() => handleThemeChange('light')}
+                  aria-pressed={theme === 'light'}
                 >
-                  Quick actions
+                  Light
                 </button>
                 <button
                   type="button"
-                  className={settings.affordanceMode === 'picker' ? 'active' : ''}
-                  onClick={() => handleModeChange('picker')}
-                  aria-pressed={settings.affordanceMode === 'picker'}
+                  className={theme === 'dark' ? 'active' : ''}
+                  onClick={() => handleThemeChange('dark')}
+                  aria-pressed={theme === 'dark'}
                 >
-                  Provider picker
+                  Dark
                 </button>
               </div>
             </div>
@@ -256,38 +253,7 @@ export const OptionsPage: React.FC = () => {
           </section>
         )}
 
-        <section className="section">
-          <p className="section-label">Interface</p>
-          <div className="card">
-            <div className="setting-row">
-              <div className="setting-copy">
-                <div className="setting-title">Interface theme</div>
-                <p className="setting-description">
-                  Keep a bright workspace by default or swap to the dark palette.
-                </p>
-              </div>
-              <div className="segmented-control" role="group" aria-label="Select interface theme">
-                <button
-                  type="button"
-                  className={theme === 'light' ? 'active' : ''}
-                  onClick={() => handleThemeChange('light')}
-                  aria-pressed={theme === 'light'}
-                >
-                  Light
-                </button>
-                <button
-                  type="button"
-                  className={theme === 'dark' ? 'active' : ''}
-                  onClick={() => handleThemeChange('dark')}
-                  aria-pressed={theme === 'dark'}
-                >
-                  Dark
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
+        
         <section className="section">
           <p className="section-label">About</p>
           <div className="card">

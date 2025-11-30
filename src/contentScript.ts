@@ -7,7 +7,7 @@ interface Settings {
     google: boolean;
     claude: boolean;
   };
-  affordanceMode: 'quick-actions' | 'picker';
+  affordanceMode: 'quick-actions';
   theme?: 'light' | 'dark';
 }
 
@@ -175,30 +175,18 @@ class SelectionHandler {
     container.setAttribute('aria-label', 'Search providers');
     container.style.visibility = 'hidden';
 
-    // Create buttons based on settings
+    // Create buttons for enabled providers
     const buttons: HTMLElement[] = [];
 
-    if (this.settings.affordanceMode === 'quick-actions') {
-      // Show only enabled providers as quick actions
-      if (this.settings.providers.chatgpt) {
-        buttons.push(this.createButton('ChatGPT', 'chatgpt', selectedText));
-      }
-      if (this.settings.providers.google) {
-        buttons.push(this.createButton('Google Search', 'google', selectedText));
-      }
-      if (this.settings.providers.claude) {
-        buttons.push(this.createButton('Claude', 'claude', selectedText));
-      }
-    } else {
-      // Show picker mode
-      const pickerButton = document.createElement('button');
-      pickerButton.className = `${this.NAMESPACE}-button ${this.NAMESPACE}-picker`;
-      pickerButton.textContent = 'Search with...';
-      pickerButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.showProviderPicker(selectedText, pickerButton);
-      });
-      buttons.push(pickerButton);
+    // Show only enabled providers as quick actions
+    if (this.settings.providers.chatgpt) {
+      buttons.push(this.createButton('ChatGPT', 'chatgpt', selectedText));
+    }
+    if (this.settings.providers.google) {
+      buttons.push(this.createButton('Google Search', 'google', selectedText));
+    }
+    if (this.settings.providers.claude) {
+      buttons.push(this.createButton('Claude', 'claude', selectedText));
     }
 
     // Add buttons to container
@@ -256,56 +244,7 @@ class SelectionHandler {
     return button;
   }
 
-  private showProviderPicker(selectedText: string, triggerButton: HTMLElement): void {
-    // Create picker menu
-    const picker = document.createElement('div');
-    picker.className = `${this.NAMESPACE}-picker-menu`;
-    picker.setAttribute('role', 'menu');
-
-    const providers: Array<{key: 'chatgpt' | 'google' | 'claude', name: string}> = [
-      { key: 'chatgpt', name: 'ChatGPT' },
-      { key: 'google', name: 'Google Search' },
-      { key: 'claude', name: 'Claude' },
-    ];
-
-    providers.forEach((provider) => {
-      if (this.settings.providers[provider.key as keyof typeof this.settings.providers]) {
-        const item = document.createElement('button');
-        item.className = `${this.NAMESPACE}-picker-item`;
-        item.textContent = provider.name;
-        item.setAttribute('role', 'menuitem');
-
-        item.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.openProvider(provider.key as 'chatgpt' | 'google' | 'claude', selectedText);
-        });
-
-        picker.appendChild(item);
-      }
-    });
-
-    // Position picker
-    const triggerRect = triggerButton.getBoundingClientRect();
-    picker.style.position = 'fixed';
-    picker.style.top = `${triggerRect.bottom + window.scrollY}px`;
-    picker.style.left = `${triggerRect.left + window.scrollX}px`;
-    picker.style.zIndex = '10000';
-
-    // Add to DOM
-    document.body.appendChild(picker);
-
-    // Close picker on outside click
-    const closePicker = (e: MouseEvent) => {
-      if (!picker.contains(e.target as Node)) {
-        picker.remove();
-        document.removeEventListener('click', closePicker);
-      }
-    };
-    setTimeout(() => {
-      document.addEventListener('click', closePicker);
-    }, 0);
-  }
-
+  
   private positionContainer(container: HTMLElement, selectionRect: DOMRect): void {
     const containerStyle = container.style;
     containerStyle.position = 'fixed';

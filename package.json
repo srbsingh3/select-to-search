@@ -1,6 +1,6 @@
 {
   "name": "select-to-search-extension",
-  "version": "1.0.0",
+  "version": "1.0",
   "description": "Chrome extension to instantly search selected text in AI providers",
   "type": "module",
   "scripts": {

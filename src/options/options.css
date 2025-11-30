@@ -201,6 +201,11 @@ body {
   display: block;
 }
 
+/* Dark mode icon filters for provider icons */
+:root[data-theme='dark'] .provider-icon[src*="chatgpt.svg"] {
+  filter: brightness(0) invert(1);
+}
+
 .setting-title {
   margin: 0;
   font-size: 15px;

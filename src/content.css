@@ -155,6 +155,11 @@ html[data-theme="dark"] {
   height: 16px;
 }
 
+/* Dark mode icon filters */
+html[data-theme="dark"] .select-to-search-icon-chatgpt {
+  filter: brightness(0) invert(1);
+}
+
 /* Picker button */
 .select-to-search-picker {
   min-width: 120px;

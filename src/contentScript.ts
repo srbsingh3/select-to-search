@@ -241,11 +241,7 @@ class SelectionHandler {
       const icon = document.createElement('img');
       icon.className = `${this.NAMESPACE}-icon ${this.NAMESPACE}-icon-${provider}`;
       icon.alt = text;
-      // Use white icon for ChatGPT in dark mode
-      const iconFile = provider === 'chatgpt' && this.settings.theme === 'dark'
-        ? 'chatgpt-white.svg'
-        : `${provider}.svg`;
-      icon.src = chrome.runtime.getURL(`icons/${iconFile}`);
+      icon.src = chrome.runtime.getURL(`icons/${provider}.svg`);
       button.appendChild(icon);
     } else {
       const fallback = provider === 'google' ? 'G' : 'C';

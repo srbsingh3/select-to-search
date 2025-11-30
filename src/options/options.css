@@ -315,7 +315,6 @@ body {
 }
 
 .warning {
-  margin-top: var(--space-4);
   padding: var(--space-4);
   border-radius: var(--radius-sm);
   background: rgba(201, 108, 44, 0.08);

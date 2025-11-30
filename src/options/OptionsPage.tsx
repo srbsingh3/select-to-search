@@ -244,8 +244,12 @@ export const OptionsPage: React.FC = () => {
               )}
 
               {!hasAnyProviderEnabled && (
-                <div className="warning">
-                  At least one provider needs to stay on for the floating actions to work.
+                <div className="setting-row no-border">
+                  <div className="setting-copy">
+                    <div className="warning">
+                      At least one provider needs to stay on for the floating actions to work.
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

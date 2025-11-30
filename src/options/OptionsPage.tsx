@@ -9,6 +9,7 @@ interface Settings {
     claude: boolean;
   };
   affordanceMode: 'quick-actions' | 'picker';
+  theme: Theme;
 }
 
 type Theme = 'light' | 'dark';
@@ -29,6 +30,7 @@ export const OptionsPage: React.FC = () => {
       claude: false,
     },
     affordanceMode: 'quick-actions',
+    theme: 'light',
   });
 
   const [theme, setTheme] = useState<Theme>('light');
@@ -77,9 +79,11 @@ export const OptionsPage: React.FC = () => {
           claude: false,
         },
         affordanceMode: 'quick-actions',
+        theme: 'light',
       });
 
       setSettings(stored as Settings);
+      setTheme(stored.theme || 'light');
     } catch (error) {
       console.error('Failed to load settings:', error);
     } finally {
@@ -99,6 +103,9 @@ export const OptionsPage: React.FC = () => {
 
   const handleThemeChange = (value: Theme) => {
     setTheme(value);
+    const newSettings = { ...settings, theme: value };
+    setSettings(newSettings);
+    saveSettings({ theme: value });
   };
 
   const handleEnabledChange = (enabled: boolean) => {

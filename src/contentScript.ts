@@ -8,6 +8,7 @@ interface Settings {
     claude: boolean;
   };
   affordanceMode: 'quick-actions' | 'picker';
+  theme?: 'light' | 'dark';
 }
 
 interface FloatingUI {
@@ -55,6 +56,7 @@ class SelectionHandler {
         claude: false,
       },
       affordanceMode: 'quick-actions',
+      theme: 'light',
     };
   }
 
@@ -62,10 +64,16 @@ class SelectionHandler {
     try {
       const stored = await chrome.storage.sync.get(this.getDefaultSettings());
       this.settings = stored as Settings;
+      this.applyTheme(this.settings.theme || 'light');
     } catch (error) {
       console.error('Failed to load settings, using defaults:', error);
       this.settings = this.getDefaultSettings();
+      this.applyTheme(this.settings.theme || 'light');
     }
+  }
+
+  private applyTheme(theme: 'light' | 'dark'): void {
+    document.documentElement.dataset.theme = theme;
   }
 
   private init(): void {
@@ -233,7 +241,11 @@ class SelectionHandler {
       const icon = document.createElement('img');
       icon.className = `${this.NAMESPACE}-icon ${this.NAMESPACE}-icon-${provider}`;
       icon.alt = text;
-      icon.src = chrome.runtime.getURL(`icons/${provider}.svg`);
+      // Use white icon for ChatGPT in dark mode
+      const iconFile = provider === 'chatgpt' && this.settings.theme === 'dark'
+        ? 'chatgpt-white.svg'
+        : `${provider}.svg`;
+      icon.src = chrome.runtime.getURL(`icons/${iconFile}`);
       button.appendChild(icon);
     } else {
       const fallback = provider === 'google' ? 'G' : 'C';

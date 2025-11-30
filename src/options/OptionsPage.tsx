@@ -161,7 +161,7 @@ export const OptionsPage: React.FC = () => {
               <div className="setting-copy">
                 <div className="setting-title">Enable Extension</div>
                 <p className="setting-description">
-                  Show quick actions whenever you highlight text.
+                  Show quick actions whenever you highlight text
                 </p>
               </div>
               <label className="switch">
@@ -181,7 +181,7 @@ export const OptionsPage: React.FC = () => {
               <div className="setting-copy">
                 <div className="setting-title">Affordance style</div>
                 <p className="setting-description">
-                  Choose how the search button appears when you select text.
+                  Choose how the search button appears when you select text
                 </p>
               </div>
               <div className="segmented-control" role="group" aria-label="Select affordance style">

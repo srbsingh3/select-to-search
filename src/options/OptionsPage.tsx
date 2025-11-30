@@ -181,7 +181,7 @@ export const OptionsPage: React.FC = () => {
               <div className="setting-copy">
                 <div className="setting-title">Affordance style</div>
                 <p className="setting-description">
-                  Choose how provider actions appear when you select text.
+                  Choose how the search button appears when you select text.
                 </p>
               </div>
               <div className="segmented-control" role="group" aria-label="Select affordance style">

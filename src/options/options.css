@@ -89,9 +89,9 @@ body {
 }
 
 .page-heading .logo-options-page {
-  height: 48px;
+  height: 45px;
   width: auto;
-  max-width: 304px;
+  max-width: 288px;
   margin: 4px 0;
 }
 
@@ -372,8 +372,8 @@ body {
   }
 
   .page-heading .logo-options-page {
-    height: 38px;
-    max-width: 240px;
+    height: 36px;
+    max-width: 227px;
   }
 
   .page-meta {

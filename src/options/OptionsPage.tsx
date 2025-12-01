@@ -52,16 +52,10 @@ export const OptionsPage: React.FC = () => {
 
     // Notify content scripts that options page is open
     try {
-      // Try to notify all tabs via chrome.runtime (if available)
-      if (typeof chrome !== 'undefined' && (chrome as any).runtime) {
-        (chrome as any).runtime.sendMessage({ type: 'OPTIONS_PAGE_OPEN' });
-      }
-
-      // Also dispatch custom event for same-window communication
+      // Only dispatch custom event for communication (localStorage events handle cross-tab)
       window.dispatchEvent(new CustomEvent('select-to-search-options-open'));
     } catch (error) {
-      // Gracefully handle if chrome.runtime is not available
-      console.log('Chrome runtime not available:', error);
+      console.error('Failed to dispatch options open event:', error);
     }
   }, []);
 
@@ -138,24 +132,8 @@ export const OptionsPage: React.FC = () => {
       localStorage.setItem(settingsStorageKey, JSON.stringify(updatedSettings));
       setSettings(updatedSettings);
 
-      // Dispatch storage event to notify content scripts on other tabs
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: settingsStorageKey,
-        newValue: JSON.stringify(updatedSettings),
-        oldValue: JSON.stringify(settings)
-      }));
-
-      // Also trigger polling in all tabs as a safety net
-      try {
-        // Try to notify all tabs via chrome.runtime (if available)
-        if (typeof chrome !== 'undefined' && (chrome as any).runtime) {
-          (chrome as any).runtime.sendMessage({ type: 'SETTINGS_CHANGED' });
-        }
-      } catch (e) {
-        // Ignore chrome errors
-      }
-
-      // Dispatch custom event for same-window communication
+      // Only dispatch custom event for same window communication
+      // (StorageEvents automatically work across different tabs)
       window.dispatchEvent(new CustomEvent('select-to-search-settings-changed'));
     } catch (error) {
       console.error('Failed to save settings:', error);

@@ -5,9 +5,6 @@ interface ValidateUrlMessage {
   url: string;
 }
 
-interface OptionsPageMessage {
-  type: 'OPTIONS_PAGE_OPEN' | 'SETTINGS_CHANGED';
-}
 
 class BackgroundService {
   constructor() {
@@ -43,20 +40,10 @@ class BackgroundService {
       return true;
     }
 
-    // Handle options page messages and broadcast to all tabs
+    // Handle options page messages - no longer need tabs with localStorage approach
     if (message.type === 'OPTIONS_PAGE_OPEN' || message.type === 'SETTINGS_CHANGED') {
-      // Broadcast to all content scripts
-      chrome.tabs.query({}, (tabs) => {
-        tabs.forEach(tab => {
-          if (tab.id) {
-            chrome.tabs.sendMessage(tab.id, message, () => {
-              if (chrome.runtime.lastError) {
-                // Ignore errors for tabs that don't have content scripts
-              }
-            });
-          }
-        });
-      });
+      // No action needed - localStorage events handle cross-tab communication
+      console.log('Options page detected, expecting localStorage changes');
       return true;
     }
 

@@ -43,6 +43,13 @@ The following permissions have been removed from the extension:
 2. ACTIVE TAB PERMISSION - REMOVED
    Not needed since <all_urls> host permission already provides necessary access for content scripts to run on all pages.
 
+3. STORAGE PERMISSION - REMOVED
+   Previously used for syncing user preferences across devices. Now using localStorage which:
+   - Persists settings within the browser without requiring extension permissions
+   - Stores provider preferences (ChatGPT, Google, Claude settings)
+   - Saves theme preference and extension enabled state
+   - Works across browser sessions without special permissions
+
 
 PRIVACY PRACTICES TAB
 =====================

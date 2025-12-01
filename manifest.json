@@ -4,7 +4,6 @@
   "version": "1.0",
   "description": "Select text on any webpage and instantly search it in AI providers",
   "permissions": [
-    "storage",
     "scripting"
   ],
   "host_permissions": [

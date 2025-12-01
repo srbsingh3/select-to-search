@@ -5,6 +5,10 @@ interface ValidateUrlMessage {
   url: string;
 }
 
+interface OptionsPageMessage {
+  type: 'OPTIONS_PAGE_OPEN' | 'SETTINGS_CHANGED';
+}
+
 class BackgroundService {
   constructor() {
     this.init();
@@ -36,6 +40,23 @@ class BackgroundService {
         });
 
       // Return true to indicate async response
+      return true;
+    }
+
+    // Handle options page messages and broadcast to all tabs
+    if (message.type === 'OPTIONS_PAGE_OPEN' || message.type === 'SETTINGS_CHANGED') {
+      // Broadcast to all content scripts
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => {
+          if (tab.id) {
+            chrome.tabs.sendMessage(tab.id, message, () => {
+              if (chrome.runtime.lastError) {
+                // Ignore errors for tabs that don't have content scripts
+              }
+            });
+          }
+        });
+      });
       return true;
     }
 
@@ -85,34 +106,9 @@ class BackgroundService {
 
   private handleInstalled(details: chrome.runtime.InstalledDetails): void {
     if (details.reason === 'install') {
-      // Set default settings on first install
-      this.setDefaultSettings();
+      console.log('Select to Search extension installed');
     } else if (details.reason === 'update') {
-      // Handle updates if needed
       console.log('Extension updated to version:', chrome.runtime.getManifest().version);
-    }
-  }
-
-  private async setDefaultSettings(): Promise<void> {
-    const defaultSettings = {
-      enabled: true,
-      providers: {
-        chatgpt: true,
-        google: true,
-        claude: false,
-      },
-      affordanceMode: 'quick-actions' as const,
-    };
-
-    try {
-      // Only set defaults if no settings exist
-      const existing = await chrome.storage.sync.get();
-      if (Object.keys(existing).length === 0) {
-        await chrome.storage.sync.set(defaultSettings);
-        console.log('Default settings applied');
-      }
-    } catch (error) {
-      console.error('Failed to set default settings:', error);
     }
   }
 }

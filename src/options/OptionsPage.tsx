@@ -1,6 +1,15 @@
 // React component for options page
 import React, { useEffect, useState } from 'react';
 
+// Mock chrome.runtime.getManifest for local development
+if (typeof chrome === 'undefined' || !chrome.runtime) {
+  (globalThis as any).chrome = {
+    runtime: {
+      getManifest: () => ({ version: '1.0.0' })
+    }
+  };
+}
+
 interface Settings {
   enabled: boolean;
   providers: {
@@ -14,6 +23,7 @@ interface Settings {
 
 type Theme = 'light' | 'dark';
 const themeStorageKey = 'sts-options-theme';
+const settingsStorageKey = 'selectToSearchSettings';
 const providerOrder: Array<keyof Settings['providers']> = ['chatgpt', 'google', 'claude'];
 const providerIcons: Record<keyof Settings['providers'], string> = {
   chatgpt: '/icons/chatgpt.svg',
@@ -39,6 +49,20 @@ export const OptionsPage: React.FC = () => {
   useEffect(() => {
     loadSettings();
     bootstrapTheme();
+
+    // Notify content scripts that options page is open
+    try {
+      // Try to notify all tabs via chrome.runtime (if available)
+      if (typeof chrome !== 'undefined' && (chrome as any).runtime) {
+        (chrome as any).runtime.sendMessage({ type: 'OPTIONS_PAGE_OPEN' });
+      }
+
+      // Also dispatch custom event for same-window communication
+      window.dispatchEvent(new CustomEvent('select-to-search-options-open'));
+    } catch (error) {
+      // Gracefully handle if chrome.runtime is not available
+      console.log('Chrome runtime not available:', error);
+    }
   }, []);
 
   useEffect(() => {
@@ -69,21 +93,38 @@ export const OptionsPage: React.FC = () => {
     document.documentElement.dataset.theme = value;
   };
 
-  const loadSettings = async () => {
+  const loadSettings = () => {
     try {
-      const stored = await chrome.storage.sync.get({
-        enabled: true,
-        providers: {
-          chatgpt: true,
-          google: true,
-          claude: false,
-        },
-        affordanceMode: 'quick-actions',
-        theme: 'light',
-      });
+      const stored = localStorage.getItem(settingsStorageKey);
+      let loadedSettings: Settings;
 
-      setSettings(stored as Settings);
-      setTheme(stored.theme || 'light');
+      if (stored) {
+        loadedSettings = {
+          enabled: true,
+          providers: {
+            chatgpt: true,
+            google: true,
+            claude: false,
+          },
+          affordanceMode: 'quick-actions',
+          theme: 'light',
+          ...JSON.parse(stored)
+        };
+      } else {
+        loadedSettings = {
+          enabled: true,
+          providers: {
+            chatgpt: true,
+            google: true,
+            claude: false,
+          },
+          affordanceMode: 'quick-actions',
+          theme: 'light',
+        };
+      }
+
+      setSettings(loadedSettings);
+      setTheme(loadedSettings.theme || 'light');
     } catch (error) {
       console.error('Failed to load settings:', error);
     } finally {
@@ -91,11 +132,31 @@ export const OptionsPage: React.FC = () => {
     }
   };
 
-  const saveSettings = async (newSettings: Partial<Settings>) => {
+  const saveSettings = (newSettings: Partial<Settings>) => {
     try {
       const updatedSettings = { ...settings, ...newSettings };
-      await chrome.storage.sync.set(updatedSettings);
+      localStorage.setItem(settingsStorageKey, JSON.stringify(updatedSettings));
       setSettings(updatedSettings);
+
+      // Dispatch storage event to notify content scripts on other tabs
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: settingsStorageKey,
+        newValue: JSON.stringify(updatedSettings),
+        oldValue: JSON.stringify(settings)
+      }));
+
+      // Also trigger polling in all tabs as a safety net
+      try {
+        // Try to notify all tabs via chrome.runtime (if available)
+        if (typeof chrome !== 'undefined' && (chrome as any).runtime) {
+          (chrome as any).runtime.sendMessage({ type: 'SETTINGS_CHANGED' });
+        }
+      } catch (e) {
+        // Ignore chrome errors
+      }
+
+      // Dispatch custom event for same-window communication
+      window.dispatchEvent(new CustomEvent('select-to-search-settings-changed'));
     } catch (error) {
       console.error('Failed to save settings:', error);
     }

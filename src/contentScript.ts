@@ -21,6 +21,9 @@ class SelectionHandler {
   private settings: Settings;
   private floatingUI: FloatingUI;
   private selectionTimeout: number | null = null;
+  private settingsCheckInterval: number | null = null;
+  private pollingTimeout: number | null = null;
+  private lastSettingsHash: string = '';
   private readonly NAMESPACE = 'select-to-search';
   private readonly PROVIDER_URLS = {
     google: (text: string) => `https://www.google.com/search?q=${encodeURIComponent(text)}`,
@@ -60,15 +63,51 @@ class SelectionHandler {
     };
   }
 
-  private async loadSettings(): Promise<void> {
+  private loadSettings(): void {
     try {
-      const stored = await chrome.storage.sync.get(this.getDefaultSettings());
-      this.settings = stored as Settings;
+      const stored = localStorage.getItem('selectToSearchSettings');
+      if (stored) {
+        this.settings = { ...this.getDefaultSettings(), ...JSON.parse(stored) };
+      } else {
+        this.settings = this.getDefaultSettings();
+        // Save defaults to localStorage for future use
+        this.saveSettings();
+      }
+      this.lastSettingsHash = JSON.stringify(this.settings);
       this.applyTheme(this.settings.theme || 'light');
     } catch (error) {
       console.error('Failed to load settings, using defaults:', error);
       this.settings = this.getDefaultSettings();
+      this.lastSettingsHash = JSON.stringify(this.settings);
       this.applyTheme(this.settings.theme || 'light');
+    }
+  }
+
+  private saveSettings(): void {
+    try {
+      localStorage.setItem('selectToSearchSettings', JSON.stringify(this.settings));
+      this.lastSettingsHash = JSON.stringify(this.settings);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  }
+
+  private checkForSettingsUpdate(): void {
+    try {
+      const stored = localStorage.getItem('selectToSearchSettings');
+      if (stored) {
+        const newSettings = JSON.parse(stored);
+        const newHash = JSON.stringify(newSettings);
+
+        if (newHash !== this.lastSettingsHash) {
+          this.settings = { ...this.getDefaultSettings(), ...newSettings };
+          this.lastSettingsHash = newHash;
+          this.applyTheme(this.settings.theme || 'light');
+          console.log('Settings updated via polling');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check for settings update:', error);
     }
   }
 
@@ -77,7 +116,7 @@ class SelectionHandler {
   }
 
   private init(): void {
-    // Load settings asynchronously
+    // Load settings synchronously
     this.loadSettings();
 
     // Listen for selection events
@@ -90,8 +129,71 @@ class SelectionHandler {
     document.addEventListener('scroll', this.handleScroll.bind(this), true);
     document.addEventListener('selectionchange', this.handleSelectionChange.bind(this));
 
+    // Listen for settings changes from options page
+    window.addEventListener('storage', this.handleStorageChange.bind(this));
+
+    // Listen for option page opening and settings changes (custom events)
+    window.addEventListener('select-to-search-options-open', this.startPolling.bind(this));
+    window.addEventListener('select-to-search-settings-changed', this.startPolling.bind(this));
+
+    // Listen for background script messages
+    if (this.hasRuntime()) {
+      chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
+        if (message.type === 'OPTIONS_PAGE_OPEN' || message.type === 'SETTINGS_CHANGED') {
+          this.startPolling();
+        }
+      });
+    }
+
     // Clean up on page unload
     window.addEventListener('beforeunload', this.cleanup.bind(this));
+  }
+
+  private handleStorageChange(event: StorageEvent): void {
+    if (event.key === 'selectToSearchSettings' && event.newValue) {
+      try {
+        this.settings = { ...this.getDefaultSettings(), ...JSON.parse(event.newValue) };
+        this.lastSettingsHash = event.newValue;
+        this.applyTheme(this.settings.theme || 'light');
+        console.log('Settings updated via storage event');
+
+        // Stop polling after successful update
+        this.stopPolling();
+      } catch (error) {
+        console.error('Failed to apply settings from storage event:', error);
+        // Start polling as fallback if storage event failed
+        this.startPolling();
+      }
+    }
+  }
+
+  private startPolling(): void {
+    if (this.settingsCheckInterval) {
+      return; // Already polling
+    }
+
+    console.log('Starting settings polling (fallback)');
+    this.settingsCheckInterval = window.setInterval(() => {
+      this.checkForSettingsUpdate();
+    }, 2000); // Check every 2 seconds when active
+
+    // Auto-stop after 30 seconds
+    this.pollingTimeout = window.setTimeout(() => {
+      this.stopPolling();
+    }, 30000);
+  }
+
+  private stopPolling(): void {
+    if (this.settingsCheckInterval) {
+      clearInterval(this.settingsCheckInterval);
+      this.settingsCheckInterval = null;
+      console.log('Stopped settings polling');
+    }
+
+    if (this.pollingTimeout) {
+      clearTimeout(this.pollingTimeout);
+      this.pollingTimeout = null;
+    }
   }
 
   private handleMouseUp(_event: MouseEvent): void {
@@ -371,6 +473,17 @@ class SelectionHandler {
 
   private cleanup(): void {
     this.hideFloatingUI();
+
+    // Clear settings check intervals
+    if (this.settingsCheckInterval) {
+      clearInterval(this.settingsCheckInterval);
+      this.settingsCheckInterval = null;
+    }
+
+    if (this.pollingTimeout) {
+      clearTimeout(this.pollingTimeout);
+      this.pollingTimeout = null;
+    }
 
     // Remove event listeners
     document.removeEventListener('mouseup', this.handleMouseUp.bind(this));

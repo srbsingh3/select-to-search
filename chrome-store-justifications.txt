@@ -33,27 +33,15 @@ The scripting permission is required to inject the content script into webpages 
 
 This permission is used solely for injecting the lightweight content script that detects text selection and displays the floating action button. No other scripts are injected or executed.
 
-TABS PERMISSION JUSTIFICATION
------------------------------
-The tabs permission is required to open new browser tabs for AI provider searches. This enables the extension to:
+PERMISSIONS REMOVED
+--------------------
+The following permissions have been removed from the extension:
 
-1. Create new tabs when users click on provider buttons (ChatGPT, Google, Claude)
-2. Open selected text in the user's chosen AI provider with proper URL encoding
-3. Ensure searches open in new tabs without losing the user's current page context
-4. Maintain a clean user experience by not navigating away from the original page
+1. TABS PERMISSION - REMOVED
+   Previously used for opening new tabs with chrome.tabs.create(). Now using window.open() which doesn't require special permissions.
 
-This permission is only used to open new tabs with the selected text sent to the chosen AI provider. No existing tabs are modified, closed, or accessed for their content.
-
-ACTIVE TAB PERMISSION JUSTIFICATION
-----------------------------------
-The activeTab permission is required for temporary access to the current tab when the extension is used. This enables:
-
-1. Access the currently active tab's content to detect text selection events
-2. Only run the content script on tabs the user is actively interacting with
-3. Provide temporary, on-demand access without requiring permanent permissions
-4. Ensure the extension only works when explicitly invoked by user action
-
-This permission grants temporary access only when users interact with the extension (select text), ensuring minimal privacy impact while enabling the core text detection functionality.
+2. ACTIVE TAB PERMISSION - REMOVED
+   Not needed since <all_urls> host permission already provides necessary access for content scripts to run on all pages.
 
 
 PRIVACY PRACTICES TAB

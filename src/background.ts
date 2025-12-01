@@ -1,7 +1,7 @@
-// Background service worker for tab management
+// Background service worker for extension management
 
-interface OpenTabMessage {
-  type: 'OPEN_TAB';
+interface ValidateUrlMessage {
+  type: 'VALIDATE_AND_OPEN_URL';
   url: string;
 }
 
@@ -21,17 +21,17 @@ class BackgroundService {
   }
 
   private handleMessage(
-    message: OpenTabMessage,
-    _sender: chrome.runtime.MessageSender,
+    message: ValidateUrlMessage,
+    sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ): boolean | void {
-    if (message.type === 'OPEN_TAB') {
-      this.openProviderTab(message.url)
-        .then(() => {
-          sendResponse({ success: true });
+    if (message.type === 'VALIDATE_AND_OPEN_URL') {
+      this.validateAndReturnUrl(message.url, sender.tab?.id)
+        .then((validatedUrl) => {
+          sendResponse({ success: true, url: validatedUrl });
         })
         .catch((error) => {
-          console.error('Failed to open tab:', error);
+          console.error('Failed to validate URL:', error);
           sendResponse({ success: false, error: error.message });
         });
 
@@ -43,23 +43,14 @@ class BackgroundService {
     return false;
   }
 
-  private async openProviderTab(url: string): Promise<void> {
-    try {
-      // Validate URL to prevent security issues
-      const validUrl = this.validateUrl(url);
-      if (!validUrl) {
-        throw new Error('Invalid URL provided');
-      }
-
-      // Open new tab with provider URL
-      await chrome.tabs.create({
-        url: validUrl,
-        active: true, // Open in foreground
-      });
-    } catch (error) {
-      console.error('Error opening tab:', error);
-      throw error;
+  private async validateAndReturnUrl(url: string, _tabId?: number): Promise<string> {
+    // Validate URL to prevent security issues
+    const validUrl = this.validateUrl(url);
+    if (!validUrl) {
+      throw new Error('Invalid URL provided');
     }
+
+    return validUrl;
   }
 
   private validateUrl(url: string): string | null {

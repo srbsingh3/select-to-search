@@ -5,9 +5,7 @@
   "description": "Select text on any webpage and instantly search it in AI providers",
   "permissions": [
     "storage",
-    "scripting",
-    "tabs",
-    "activeTab"
+    "scripting"
   ],
   "host_permissions": [
     "<all_urls>"

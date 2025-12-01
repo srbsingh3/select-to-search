@@ -306,17 +306,20 @@ class SelectionHandler {
   private openProvider(provider: keyof typeof this.PROVIDER_URLS, text: string): void {
     const url = this.PROVIDER_URLS[provider](text);
 
-    // Send message to background script to open tab
+    // Send message to background script to validate URL
     if (this.hasRuntime()) {
       try {
         chrome.runtime.sendMessage({
-          type: 'OPEN_TAB',
+          type: 'VALIDATE_AND_OPEN_URL',
           url: url,
-        }, (_response) => {
-          if (chrome.runtime.lastError) {
-            console.error('Failed to open tab:', chrome.runtime.lastError);
+        }, (response) => {
+          if (chrome.runtime.lastError || !response?.success) {
+            console.error('Failed to validate URL:', chrome.runtime.lastError || response?.error);
             // Fallback: open directly
             window.open(url, '_blank');
+          } else {
+            // URL is validated, open directly
+            window.open(response.url, '_blank');
           }
         });
       } catch (error) {

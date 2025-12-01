@@ -132,7 +132,11 @@ export const OptionsPage: React.FC = () => {
     <div className="options-shell">
       <header className="page-header">
         <div className="page-heading">
-          <h1>Select to Search</h1>
+          <img
+            src="/icons/logo-options-page.svg"
+            alt="Select to Search"
+            className="logo-options-page"
+          />
         </div>
         <div className="page-meta">
           <a

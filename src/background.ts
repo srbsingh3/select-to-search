@@ -144,12 +144,13 @@ class BackgroundService {
       for (const tab of tabs) {
         if (tab.id) {
           try {
-            chrome.tabs.sendMessage(tab.id, {
+            // Await the message sending to catch "Receiving end does not exist" errors
+            await chrome.tabs.sendMessage(tab.id, {
               type: 'SETTINGS_UPDATED',
               settings: settings,
             });
           } catch (error) {
-            // Ignore errors for tabs that don't have content script
+            // Ignore errors for tabs that don't have content script or are not ready
           }
         }
       }

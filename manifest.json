@@ -3,9 +3,7 @@
   "name": "Select to Search",
   "version": "1.0",
   "description": "Select text on any webpage and instantly search it in AI providers",
-  "permissions": [
-    "scripting"
-  ],
+  "permissions": [],
   "host_permissions": [
     "<all_urls>"
   ],

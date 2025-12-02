@@ -1,10 +1,21 @@
-// Background service worker for extension management
+// Background service worker for tab management
+import { getSettings, Settings } from './utils/db';
 
-interface ValidateUrlMessage {
-  type: 'VALIDATE_AND_OPEN_URL';
+interface OpenTabMessage {
+  type: 'OPEN_TAB';
   url: string;
 }
 
+interface GetSettingsMessage {
+  type: 'GET_SETTINGS';
+}
+
+interface SettingsUpdatedMessage {
+  type: 'SETTINGS_UPDATED';
+  settings: Settings;
+}
+
+type Message = OpenTabMessage | GetSettingsMessage | SettingsUpdatedMessage;
 
 class BackgroundService {
   constructor() {
@@ -12,7 +23,7 @@ class BackgroundService {
   }
 
   private init(): void {
-    // Listen for messages from content script
+    // Listen for messages from content script and options page
     chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
 
     // Handle extension installation/update
@@ -22,17 +33,17 @@ class BackgroundService {
   }
 
   private handleMessage(
-    message: ValidateUrlMessage,
-    sender: chrome.runtime.MessageSender,
+    message: Message,
+    _sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ): boolean | void {
-    if (message.type === 'VALIDATE_AND_OPEN_URL') {
-      this.validateAndReturnUrl(message.url, sender.tab?.id)
-        .then((validatedUrl) => {
-          sendResponse({ success: true, url: validatedUrl });
+    if (message.type === 'OPEN_TAB') {
+      this.openProviderTab(message.url)
+        .then(() => {
+          sendResponse({ success: true });
         })
         .catch((error) => {
-          console.error('Failed to validate URL:', error);
+          console.error('Failed to open tab:', error);
           sendResponse({ success: false, error: error.message });
         });
 
@@ -40,25 +51,64 @@ class BackgroundService {
       return true;
     }
 
-    // Handle options page messages - no longer need tabs with localStorage approach
-    if (message.type === 'OPTIONS_PAGE_OPEN' || message.type === 'SETTINGS_CHANGED') {
-      // No action needed - localStorage events handle cross-tab communication
-      console.log('Options page detected, expecting localStorage changes');
+    if (message.type === 'GET_SETTINGS') {
+      getSettings()
+        .then((settings) => {
+          sendResponse(settings);
+        })
+        .catch((error) => {
+          console.error('Failed to get settings:', error);
+          sendResponse(null);
+        });
       return true;
     }
 
-    // For any other message types, return false
+    if (message.type === 'SETTINGS_UPDATED') {
+      // Broadcast new settings to all tabs
+      this.broadcastSettings(message.settings);
+      return false;
+    }
+
     return false;
   }
 
-  private async validateAndReturnUrl(url: string, _tabId?: number): Promise<string> {
-    // Validate URL to prevent security issues
-    const validUrl = this.validateUrl(url);
-    if (!validUrl) {
-      throw new Error('Invalid URL provided');
+  private async broadcastSettings(settings: Settings): Promise<void> {
+    try {
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id) {
+          try {
+            chrome.tabs.sendMessage(tab.id, {
+              type: 'SETTINGS_UPDATED',
+              settings: settings,
+            });
+          } catch (error) {
+            // Ignore errors for tabs that don't have content script
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to broadcast settings:', error);
     }
+  }
 
-    return validUrl;
+  private async openProviderTab(url: string): Promise<void> {
+    try {
+      // Validate URL to prevent security issues
+      const validUrl = this.validateUrl(url);
+      if (!validUrl) {
+        throw new Error('Invalid URL provided');
+      }
+
+      // Open new tab with provider URL
+      await chrome.tabs.create({
+        url: validUrl,
+        active: true, // Open in foreground
+      });
+    } catch (error) {
+      console.error('Error opening tab:', error);
+      throw error;
+    }
   }
 
   private validateUrl(url: string): string | null {

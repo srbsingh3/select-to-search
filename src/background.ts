@@ -1,9 +1,87 @@
 // Background service worker for tab management
+// Background service worker for tab management
+
+// --- IndexedDB Logic Inlined ---
+
+interface Settings {
+  enabled: boolean;
+  providers: {
+    chatgpt: boolean;
+    google: boolean;
+    claude: boolean;
+  };
+  affordanceMode: 'quick-actions';
+  theme?: 'light' | 'dark';
+}
+
+const DB_NAME = 'SelectToSearchDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'settings';
+
+const defaultSettings: Settings = {
+  enabled: true,
+  providers: {
+    chatgpt: true,
+    google: true,
+    claude: false,
+  },
+  affordanceMode: 'quick-actions',
+  theme: 'light',
+};
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+  });
+}
+
+async function getSettings(): Promise<Settings> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get('userSettings');
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const settings = request.result;
+        resolve(settings ? { ...defaultSettings, ...settings } : defaultSettings);
+      };
+    });
+  } catch (error) {
+    console.error('Failed to get settings from DB:', error);
+    return defaultSettings;
+  }
+}
+
+// --- End IndexedDB Logic ---
 
 interface OpenTabMessage {
   type: 'OPEN_TAB';
   url: string;
 }
+
+interface GetSettingsMessage {
+  type: 'GET_SETTINGS';
+}
+
+interface SettingsUpdatedMessage {
+  type: 'SETTINGS_UPDATED';
+  settings: Settings;
+}
+
+type Message = OpenTabMessage | GetSettingsMessage | SettingsUpdatedMessage;
 
 class BackgroundService {
   constructor() {
@@ -11,7 +89,7 @@ class BackgroundService {
   }
 
   private init(): void {
-    // Listen for messages from content script
+    // Listen for messages from content script and options page
     chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
 
     // Handle extension installation/update
@@ -21,7 +99,7 @@ class BackgroundService {
   }
 
   private handleMessage(
-    message: OpenTabMessage,
+    message: Message,
     _sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ): boolean | void {
@@ -39,8 +117,46 @@ class BackgroundService {
       return true;
     }
 
-    // For any other message types, return false
+    if (message.type === 'GET_SETTINGS') {
+      getSettings()
+        .then((settings) => {
+          sendResponse(settings);
+        })
+        .catch((error) => {
+          console.error('Failed to get settings:', error);
+          sendResponse(null);
+        });
+      return true;
+    }
+
+    if (message.type === 'SETTINGS_UPDATED') {
+      // Broadcast new settings to all tabs
+      this.broadcastSettings(message.settings);
+      return false;
+    }
+
     return false;
+  }
+
+  private async broadcastSettings(settings: Settings): Promise<void> {
+    try {
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id) {
+          try {
+            // Await the message sending to catch "Receiving end does not exist" errors
+            await chrome.tabs.sendMessage(tab.id, {
+              type: 'SETTINGS_UPDATED',
+              settings: settings,
+            });
+          } catch (error) {
+            // Ignore errors for tabs that don't have content script or are not ready
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to broadcast settings:', error);
+    }
   }
 
   private async openProviderTab(url: string): Promise<void> {
@@ -94,34 +210,9 @@ class BackgroundService {
 
   private handleInstalled(details: chrome.runtime.InstalledDetails): void {
     if (details.reason === 'install') {
-      // Set default settings on first install
-      this.setDefaultSettings();
+      console.log('Select to Search extension installed');
     } else if (details.reason === 'update') {
-      // Handle updates if needed
       console.log('Extension updated to version:', chrome.runtime.getManifest().version);
-    }
-  }
-
-  private async setDefaultSettings(): Promise<void> {
-    const defaultSettings = {
-      enabled: true,
-      providers: {
-        chatgpt: true,
-        google: true,
-        claude: false,
-      },
-      affordanceMode: 'quick-actions' as const,
-    };
-
-    try {
-      // Only set defaults if no settings exist
-      const existing = await chrome.storage.sync.get();
-      if (Object.keys(existing).length === 0) {
-        await chrome.storage.sync.set(defaultSettings);
-        console.log('Default settings applied');
-      }
-    } catch (error) {
-      console.error('Failed to set default settings:', error);
     }
   }
 }

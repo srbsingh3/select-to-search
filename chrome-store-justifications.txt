@@ -1,0 +1,104 @@
+CHROME WEB STORE LISTING - PERMISSIONS & PRIVACY JUSTIFICATIONS
+=============================================================
+
+PERMISSIONS WARNING - <all_urls>
+------------------------------
+Yes, this permission is needed.
+
+Storage Justification:
+The <all_urls> permission is essential for this extension's core functionality:
+
+1. Text Detection: The extension needs to run a content script on every webpage to detect when users select text. Without this permission, the extension would only work on a limited set of websites.
+
+2. Universal Functionality: Users expect to be able to select text anywhere on the internet and quickly search it in their preferred AI provider (ChatGPT, Google Search, or Claude).
+
+3. Non-Intrusive Operation: The content script only:
+   - Listens for text selection events
+   - Displays a lightweight floating UI when text is selected
+   - Communicates with the background service to open new tabs
+   - Does not modify, collect, or transmit any page content except the user's selected text
+
+4. User Control: The extension operates entirely on user-initiated actions (text selection) and can be easily disabled/removed by the user at any time.
+
+This permission is strictly required for the extension to perform its stated function of enabling quick searches from any webpage.
+
+SCRIPTING PERMISSION JUSTIFICATION
+----------------------------------
+The scripting permission is required to inject the content script into webpages dynamically. This allows the extension to:
+
+1. Inject the selection detection script into all webpages that users visit
+2. Manage script injection at runtime without requiring tab reloads after installation
+3. Comply with Manifest V3 requirements (replaces deprecated tabs.executeScript API)
+4. Dynamically inject scripts only when needed for better performance
+
+This permission is used solely for injecting the lightweight content script that detects text selection and displays the floating action button. No other scripts are injected or executed.
+
+TABS PERMISSION JUSTIFICATION
+-----------------------------
+The tabs permission is required to open new browser tabs for AI provider searches. This enables the extension to:
+
+1. Create new tabs when users click on provider buttons (ChatGPT, Google, Claude)
+2. Open selected text in the user's chosen AI provider with proper URL encoding
+3. Ensure searches open in new tabs without losing the user's current page context
+4. Maintain a clean user experience by not navigating away from the original page
+
+This permission is only used to open new tabs with the selected text sent to the chosen AI provider. No existing tabs are modified, closed, or accessed for their content.
+
+ACTIVE TAB PERMISSION JUSTIFICATION
+----------------------------------
+The activeTab permission is required for temporary access to the current tab when the extension is used. This enables:
+
+1. Access the currently active tab's content to detect text selection events
+2. Only run the content script on tabs the user is actively interacting with
+3. Provide temporary, on-demand access without requiring permanent permissions
+4. Ensure the extension only works when explicitly invoked by user action
+
+This permission grants temporary access only when users interact with the extension (select text), ensuring minimal privacy impact while enabling the core text detection functionality.
+
+3. STORAGE PERMISSION - REMOVED
+   Previously used for syncing user preferences across devices. Now using localStorage which:
+   - Persists settings within the browser without requiring extension permissions
+   - Stores provider preferences (ChatGPT, Google, Claude settings)
+   - Saves theme preference and extension enabled state
+   - Works across browser sessions without special permissions
+
+
+PRIVACY PRACTICES TAB
+=====================
+
+Fields marked as OPTIONAL are not required for this extension:
+- OPTIONAL: "Is user data sent to your servers?" - NOT APPLICABLE (we don't have servers)
+- OPTIONAL: "Is user data monetized?" - NOT APPLICABLE (we don't collect any data)
+- OPTIONAL: "Do you use data for security purposes?" - NOT APPLICABLE (no security data collected)
+- OPTIONAL: "Is user data used for legal compliance purposes?" - NOT APPLICABLE (no data collection)
+- OPTIONAL: "Is user data used for advertising purposes?" - NOT APPLICABLE (no advertising)
+- OPTIONAL: "Does the extension have features related to minors?" - NOT APPLICABLE
+- OPTIONAL: "Does the extension handle user identifiers?" - NOT APPLICABLE
+- OPTIONAL: "Do you use identifiers for product improvement?" - NOT APPLICABLE
+- OPTIONAL: "Do you combine user data with data from other sources?" - NOT APPLICABLE
+- OPTIONAL: "Do you use sensitive data?" - NOT APPLICABLE
+- OPTIONAL: "Do you collect data from third parties?" - NOT APPLICABLE
+- OPTIONAL: "Do you use Google APIs?" - NOT APPLICABLE
+- OPTIONAL: "Do you use offline data?" - NOT APPLICABLE
+- OPTIONAL: "Do you use third party analytics?" - NOT APPLICABLE
+
+
+REQUIRED FIELDS:
+
+1. PURPOSE: How do you collect or use data?
+We use chrome.storage.sync to save user preferences (enabled/disabled AI providers, extension settings). The only data transmitted is the user's selected text, which is sent to the user-chosen AI provider's website via URL parameters. No data is sent to our servers.
+
+2. PURPOSE: Is data shared with third parties?
+The selected text is shared with the AI provider the user chooses (ChatGPT, Google Search, or Claude) by opening their website with the text as a URL parameter. This is a direct action initiated by the user. We do not collect, store, or share any user data with any other third parties.
+
+3. PURPOSE: What data is collected?
+User preferences stored locally in browser (provider settings, extension preferences). No browsing history, personal information, or usage analytics are collected. The only temporary data is the text selected by the user, which is sent to their chosen provider's website.
+
+4. Single Purpose: How does this extension have a single purpose?
+This extension has a single purpose: to allow users to quickly search selected text in their preferred AI provider (ChatGPT, Google Search, or Claude) by selecting text on any webpage and clicking a floating action button.
+
+5. Intrusiveness: How is the extension minimally intrusive?
+The extension requires <all_urls> permission to inject a content script that detects text selection on any webpage. It also requires tabs permission to open new tabs for the search providers and storage permission to save user preferences. The content script only activates when users select text and displays a minimal UI overlay. No page content is modified or collected except for the user's selected text.
+
+6. Human Readable Summary:
+Select-to-Search enables instant AI-powered searches from any webpage. Simply select text, and a floating button appears to search it in ChatGPT, Google, or Claude. No API keys required - it uses your existing sessions.

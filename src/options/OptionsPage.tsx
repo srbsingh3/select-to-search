@@ -1,15 +1,15 @@
 // React component for options page
 import React, { useEffect, useState } from 'react';
+import { getSettings, saveSettings as saveSettingsToDB, Settings, defaultSettings } from '../utils/db';
 
-interface Settings {
-  enabled: boolean;
-  providers: {
-    chatgpt: boolean;
-    google: boolean;
-    claude: boolean;
+// Mock chrome.runtime.getManifest for local development
+if (typeof chrome === 'undefined' || !chrome.runtime) {
+  (globalThis as any).chrome = {
+    runtime: {
+      getManifest: () => ({ version: '1.0.0' }),
+      sendMessage: () => { },
+    }
   };
-  affordanceMode: 'quick-actions';
-  theme: Theme;
 }
 
 type Theme = 'light' | 'dark';
@@ -22,23 +22,12 @@ const providerIcons: Record<keyof Settings['providers'], string> = {
 };
 
 export const OptionsPage: React.FC = () => {
-  const [settings, setSettings] = useState<Settings>({
-    enabled: true,
-    providers: {
-      chatgpt: true,
-      google: true,
-      claude: false,
-    },
-    affordanceMode: 'quick-actions',
-    theme: 'light',
-  });
-
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [theme, setTheme] = useState<Theme>('light');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadSettings();
-    bootstrapTheme();
+    initialize();
   }, []);
 
   useEffect(() => {
@@ -50,61 +39,72 @@ export const OptionsPage: React.FC = () => {
     }
   }, [theme]);
 
-  const bootstrapTheme = () => {
+  const initialize = async () => {
     try {
+      // Migration: Check if we have localStorage settings but no DB settings
+      // This is a simple heuristic: if DB returns defaults but localStorage has 'selectToSearchSettings', migrate.
+      const dbSettings = await getSettings();
+      const localSettingsJson = localStorage.getItem('selectToSearchSettings');
+
+      let finalSettings = dbSettings;
+
+      if (localSettingsJson) {
+        try {
+          const localSettings = JSON.parse(localSettingsJson);
+          // If DB is fresh (matches default) and we have local settings, assume migration needed
+          // Or just always merge local settings if they exist to be safe for this transition
+          finalSettings = { ...dbSettings, ...localSettings };
+
+          // Save to DB
+          await saveSettingsToDB(finalSettings);
+
+          // Clear localStorage to avoid future confusion? 
+          // Maybe keep it for now as backup, but we won't read it again.
+          localStorage.removeItem('selectToSearchSettings');
+        } catch (e) {
+          console.error('Migration failed', e);
+        }
+      }
+
+      setSettings(finalSettings);
+      setTheme(finalSettings.theme || 'light');
+
+      // Also check theme preference for the options page itself
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === 'light' || storedTheme === 'dark') {
         setTheme(storedTheme);
-        applyTheme(storedTheme);
-        return;
       }
-    } catch (error) {
-      console.warn('Could not read theme preference', error);
-    }
 
-    applyTheme('light');
+    } catch (error) {
+      console.error('Failed to initialize settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const applyTheme = (value: Theme) => {
     document.documentElement.dataset.theme = value;
   };
 
-  const loadSettings = async () => {
-    try {
-      const stored = await chrome.storage.sync.get({
-        enabled: true,
-        providers: {
-          chatgpt: true,
-          google: true,
-          claude: false,
-        },
-        affordanceMode: 'quick-actions',
-        theme: 'light',
-      });
-
-      setSettings(stored as Settings);
-      setTheme(stored.theme || 'light');
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const saveSettings = async (newSettings: Partial<Settings>) => {
     try {
       const updatedSettings = { ...settings, ...newSettings };
-      await chrome.storage.sync.set(updatedSettings);
-      setSettings(updatedSettings);
+      setSettings(updatedSettings); // Optimistic update
+
+      await saveSettingsToDB(updatedSettings);
+
+      // Notify background script to broadcast changes
+      if (chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'SETTINGS_UPDATED', settings: updatedSettings });
+      }
     } catch (error) {
       console.error('Failed to save settings:', error);
+      // Revert on error? For now just log.
     }
   };
 
   const handleThemeChange = (value: Theme) => {
     setTheme(value);
-    const newSettings = { ...settings, theme: value };
-    setSettings(newSettings);
     saveSettings({ theme: value });
   };
 
@@ -117,7 +117,6 @@ export const OptionsPage: React.FC = () => {
     saveSettings({ providers: newProviders });
   };
 
-  
   const hasAnyProviderEnabled = Object.values(settings.providers).some(Boolean);
 
   if (isLoading) {
@@ -257,7 +256,7 @@ export const OptionsPage: React.FC = () => {
           </section>
         )}
 
-        
+
         <section className="section">
           <p className="section-label">About</p>
           <div className="card">
@@ -276,3 +275,4 @@ export const OptionsPage: React.FC = () => {
     </div>
   );
 };
+

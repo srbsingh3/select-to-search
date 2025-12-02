@@ -60,24 +60,8 @@ class SelectionHandler {
     };
   }
 
-  private async loadSettings(): Promise<void> {
-    try {
-      const stored = await chrome.storage.sync.get(this.getDefaultSettings());
-      this.settings = stored as Settings;
-      this.applyTheme(this.settings.theme || 'light');
-    } catch (error) {
-      console.error('Failed to load settings, using defaults:', error);
-      this.settings = this.getDefaultSettings();
-      this.applyTheme(this.settings.theme || 'light');
-    }
-  }
-
-  private applyTheme(theme: 'light' | 'dark'): void {
-    document.documentElement.dataset.theme = theme;
-  }
-
   private init(): void {
-    // Load settings asynchronously
+    // Load settings from background script
     this.loadSettings();
 
     // Listen for selection events
@@ -90,9 +74,41 @@ class SelectionHandler {
     document.addEventListener('scroll', this.handleScroll.bind(this), true);
     document.addEventListener('selectionchange', this.handleSelectionChange.bind(this));
 
+    // Listen for settings updates from background script
+    if (this.hasRuntime()) {
+      chrome.runtime.onMessage.addListener((message) => {
+        if (message.type === 'SETTINGS_UPDATED') {
+          console.log('Settings updated from background:', message.settings);
+          this.settings = message.settings;
+          this.applyTheme(this.settings.theme || 'light');
+          this.hideFloatingUI();
+        }
+      });
+    }
+
     // Clean up on page unload
     window.addEventListener('beforeunload', this.cleanup.bind(this));
   }
+
+  private loadSettings(): void {
+    if (this.hasRuntime()) {
+      chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('Failed to load settings:', chrome.runtime.lastError);
+          return;
+        }
+        if (response) {
+          this.settings = response;
+          this.applyTheme(this.settings.theme || 'light');
+        }
+      });
+    }
+  }
+
+  private applyTheme(theme: 'light' | 'dark'): void {
+    document.documentElement.dataset.theme = theme;
+  }
+
 
   private handleMouseUp(_event: MouseEvent): void {
     // Small delay to ensure selection is complete
@@ -244,7 +260,7 @@ class SelectionHandler {
     return button;
   }
 
-  
+
   private positionContainer(container: HTMLElement, selectionRect: DOMRect): void {
     const containerStyle = container.style;
     containerStyle.position = 'fixed';
@@ -386,7 +402,7 @@ class SelectionHandler {
     offset: number,
     viewportWidth: number,
     viewportHeight: number,
-  ): Array<{top: number; left: number}> {
+  ): Array<{ top: number; left: number }> {
     const margin = 4;
     const centerLeft = this.clamp(
       selectionRect.left + (selectionRect.width / 2) - (containerWidth / 2),
@@ -434,10 +450,10 @@ class SelectionHandler {
 
   private getBestPosition(
     container: HTMLElement,
-    candidates: Array<{top: number; left: number}>,
+    candidates: Array<{ top: number; left: number }>,
     containerWidth: number,
     containerHeight: number,
-  ): {top: number; left: number} {
+  ): { top: number; left: number } {
     let bestPosition = candidates[0];
     let bestOverlap = Number.POSITIVE_INFINITY;
 
@@ -517,7 +533,7 @@ class SelectionHandler {
     return overlaps;
   }
 
-  private getSamplePoints(rect: DOMRect): Array<{x: number; y: number}> {
+  private getSamplePoints(rect: DOMRect): Array<{ x: number; y: number }> {
     const padding = 1;
     const points = [
       { x: rect.left + padding, y: rect.top + padding },

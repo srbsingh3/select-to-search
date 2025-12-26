@@ -2,7 +2,7 @@
 
 ## Project Structure & Modules
 - MV3 manifest at `manifest.json` defines the content script, background service worker, options page, and permissions (`storage`, `scripting`, `tabs`, `activeTab`, `<all_urls>`).
-- Code lives in `src/`: `contentScript.ts` (selection detection, floating UI), `background.ts` (tab creation), `options/main.tsx` + `OptionsPage.tsx` (settings UI), and CSS in `content.css` + `options.css` with tokens in `:root`.
+- Code lives in `src/`: `contentScript.ts` (selection detection, floating UI with inlined Shadow DOM styles), `background.ts` (tab creation), `options/main.tsx` + `OptionsPage.tsx` (settings UI), and `options.css` with tokens in `:root`. Content script styles are inlined in Shadow DOM using `:host` selectors for isolation.
 - `public/options.html` hosts the options shell; Vite builds to `dist/` for loading as an unpacked extension. Co-locate tests with sources (e.g., `contentScript.test.ts`).
 
 ## Build, Test, and Development

@@ -13,9 +13,6 @@ export default defineConfig({
         // Copy manifest.json
         copyFileSync('manifest.json', 'dist/manifest.json');
 
-        // Copy content CSS
-        copyFileSync('src/content.css', 'dist/content.css');
-
         // Copy options HTML and update script reference
         let optionsHtml = readFileSync('public/options.html', 'utf-8');
         optionsHtml = optionsHtml.replace('src="/options.js"', 'src="./options.js"');

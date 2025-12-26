@@ -6,7 +6,7 @@
 - `src/options/main.tsx` - React entry for the options page UI and state wiring.
 - `src/options/OptionsPage.tsx` - Main options page component with provider checkboxes and affordance mode controls.
 - `src/options/options.css` - Styling for the options page using tokens.
-- `src/content.css` - Styling for in-page affordances and picker.
+- `src/contentScript.ts` - Content script with inlined Shadow DOM styles for in-page affordances (see `injectStyles()` method).
 - `vite.config.ts` - Build output configuration for content script, background, and options page bundles.
 - `public/options.html` - Options page HTML shell referencing the built bundle.
 

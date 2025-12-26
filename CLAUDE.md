@@ -48,9 +48,8 @@ npx jest src/contentScript.test.ts  # Run specific test file
 ### File Structure (Expected)
 ```
 src/
-├── contentScript.ts      # Selection detection, floating UI, messaging
+├── contentScript.ts      # Selection detection, floating UI, messaging (includes inlined Shadow DOM styles)
 ├── background.ts         # Service worker for tab creation
-├── content.css          # In-page UI styling with CSS tokens
 └── options/
     ├── main.tsx         # React entry point
     ├── OptionsPage.tsx  # Settings UI component
@@ -133,10 +132,10 @@ Namespace content script styles to avoid host page conflicts.
 5. Update picker UI if needed
 
 ### Modifying the Floating UI
-- Edit `src/contentScript.ts` for behavior
-- Edit `src/content.css` for styling
+- Edit `src/contentScript.ts` for behavior and styling (styles are inlined in Shadow DOM via `injectStyles()`)
 - Keep UI lightweight and keyboard-accessible
 - Ensure proper cleanup on all dismissal triggers
+- Styles use Shadow DOM isolation (`:host` selectors) to prevent conflicts with host pages
 
 ### Settings Page Changes
 - Options are React components in `src/options/`

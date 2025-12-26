@@ -213,6 +213,11 @@ body {
   filter: brightness(0) invert(1);
 }
 
+/* Dark mode filter for logo */
+:root[data-theme='dark'] .logo-options-page {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 .setting-title {
   margin: 0;
   font-size: 15px;

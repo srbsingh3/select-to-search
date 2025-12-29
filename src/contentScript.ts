@@ -339,10 +339,19 @@ class SelectionHandler {
     if (this.hasRuntime()) {
       chrome.runtime.onMessage.addListener((message) => {
         if (message.type === 'SETTINGS_UPDATED') {
-          console.log('Settings updated from background:', message.settings);
+          const wasEnabled = this.settings.enabled;
           this.settings = message.settings;
           this.applyTheme(this.settings.theme || 'light');
           this.hideFloatingUI();
+
+          // Handle Shadow DOM host based on enabled state
+          if (wasEnabled && !this.settings.enabled) {
+            // Disabled: remove Shadow DOM host from DOM
+            this.detachShadowHost();
+          } else if (!wasEnabled && this.settings.enabled) {
+            // Enabled: re-add Shadow DOM host to DOM
+            this.attachShadowHost();
+          }
         }
       });
     }
@@ -361,6 +370,11 @@ class SelectionHandler {
         if (response) {
           this.settings = response;
           this.applyTheme(this.settings.theme || 'light');
+
+          // If extension is disabled on load, detach the Shadow DOM host
+          if (!this.settings.enabled) {
+            this.detachShadowHost();
+          }
         }
       });
     }
@@ -371,8 +385,22 @@ class SelectionHandler {
     this.shadowHost.dataset.theme = theme;
   }
 
+  private attachShadowHost(): void {
+    if (!this.shadowHost.parentNode) {
+      document.body.appendChild(this.shadowHost);
+    }
+  }
+
+  private detachShadowHost(): void {
+    if (this.shadowHost.parentNode) {
+      this.shadowHost.remove();
+    }
+  }
+
 
   private handleMouseUp(_event: MouseEvent): void {
+    if (!this.settings.enabled) return;
+
     // Small delay to ensure selection is complete
     this.selectionTimeout = window.setTimeout(() => {
       this.checkSelection();
@@ -380,6 +408,8 @@ class SelectionHandler {
   }
 
   private handleKeyUp(event: KeyboardEvent): void {
+    if (!this.settings.enabled) return;
+
     if (event.key === 'Escape') {
       return;
     }

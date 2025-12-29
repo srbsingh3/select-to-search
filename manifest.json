@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Select to Search",
+  "name": "Select to Search – AI Search for Selected Text (ChatGPT, Claude, Google)",
   "version": "1.1",
-  "description": "Select text on any webpage and instantly search it in AI providers",
+  "description": "Search highlighted text instantly with ChatGPT, Claude, or Google. No copy-paste, no tab switching.",
   "permissions": [],
   "host_permissions": [
     "<all_urls>"
